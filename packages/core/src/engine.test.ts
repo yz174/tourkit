@@ -579,6 +579,35 @@ describe("subscriptions", () => {
   });
 });
 
+describe("setOptions", () => {
+  test("a new theme applies without restarting the tour", async () => {
+    const engine = new TourEngine<Ctx>({
+      tours: [tour([{ id: "a" }, { id: "b" }])],
+      context,
+      theme: { accent: "#light" },
+    });
+
+    await engine.start("onboarding");
+    expect(engine.getSnapshot().theme.accent).toBe("#light");
+
+    engine.setOptions({ theme: { accent: "#dark" } });
+
+    expect(engine.getSnapshot().theme.accent).toBe("#dark");
+    expect(engine.getSnapshot().status).toBe("active");
+    expect(engine.getSnapshot().step?.id).toBe("a");
+  });
+
+  test("replacing the tours list keeps the running tour resolvable", async () => {
+    const engine = new TourEngine<Ctx>({ tours: [tour([{ id: "a" }, { id: "b" }])], context });
+
+    await engine.start("onboarding");
+    engine.setOptions({ tours: [tour([{ id: "a" }, { id: "b" }, { id: "c" }])] });
+
+    expect(engine.getSnapshot().total).toBe(3);
+    expect(engine.getSnapshot().step?.id).toBe("a");
+  });
+});
+
 describe("unknown tours", () => {
   test("starting a tour that does not exist changes nothing", async () => {
     const engine = new TourEngine<Ctx>({ tours: [tour([{ id: "a" }])], context });

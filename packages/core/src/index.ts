@@ -3,7 +3,14 @@ export { TourEngine } from "./engine";
 export { clearRecord, readRecord, storageKey, writeRecord } from "./persistence";
 export { type Rect, rectsEqual } from "./rect";
 export { indexOfStep, stepAt, visibleSteps } from "./resolver";
-export { defaultTheme, mergeTheme, type TextStyle, type Theme, type ThemeOverride } from "./theme";
+export {
+  defaultTheme,
+  type FontWeight,
+  mergeTheme,
+  type TextStyle,
+  type Theme,
+  type ThemeOverride,
+} from "./theme";
 export type {
   EventHandler,
   GateArgs,

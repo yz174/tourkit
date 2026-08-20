@@ -1,4 +1,17 @@
-export type TextStyle = { fontSize: number; fontWeight: string; color: string };
+export type FontWeight =
+  | "normal"
+  | "bold"
+  | "100"
+  | "200"
+  | "300"
+  | "400"
+  | "500"
+  | "600"
+  | "700"
+  | "800"
+  | "900";
+
+export type TextStyle = { fontSize: number; fontWeight: FontWeight; color: string };
 
 export type Theme = {
   accent: string;

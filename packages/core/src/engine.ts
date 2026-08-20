@@ -65,6 +65,11 @@ export class TourEngine<Ctx = unknown> {
     this.#notify();
   }
 
+  setOptions(patch: Partial<Omit<EngineOptions<Ctx>, "context">>): void {
+    this.#options = { ...this.#options, ...patch };
+    this.#notify();
+  }
+
   async start(tourId: string): Promise<void> {
     const config = this.#options.tours.find((tour) => tour.id === tourId);
     if (!config) return;
