@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "build": "bun run --filter='@tourkit/*' build",
-    "typecheck": "bun run --filter='@tourkit/*' typecheck",
+    "typecheck": "bun run build && bun run --filter='@tourkit/*' typecheck",
     "test": "bun test",
     "lint": "biome check .",
     "format": "biome check --write ."
