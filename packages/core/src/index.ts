@@ -1,11 +1,23 @@
-export type Rect = { x: number; y: number; width: number; height: number };
-
-export function rectsEqual(a: Rect | null, b: Rect | null, epsilon = 0.5): boolean {
-  if (a === null || b === null) return a === b;
-  return (
-    Math.abs(a.x - b.x) < epsilon &&
-    Math.abs(a.y - b.y) < epsilon &&
-    Math.abs(a.width - b.width) < epsilon &&
-    Math.abs(a.height - b.height) < epsilon
-  );
-}
+export type { EngineOptions, EngineSnapshot } from "./engine";
+export { TourEngine } from "./engine";
+export { clearRecord, readRecord, storageKey, writeRecord } from "./persistence";
+export { type Rect, rectsEqual } from "./rect";
+export { indexOfStep, stepAt, visibleSteps } from "./resolver";
+export { defaultTheme, mergeTheme, type TextStyle, type Theme, type ThemeOverride } from "./theme";
+export type {
+  EventHandler,
+  GateArgs,
+  GateTimeoutPolicy,
+  Interaction,
+  NavAdapter,
+  PersistedTour,
+  Placement,
+  ScrollOptions,
+  StorageAdapter,
+  TourConfig,
+  TourEvent,
+  TourEventName,
+  TourOutcome,
+  TourStatus,
+  TourStep,
+} from "./types";
