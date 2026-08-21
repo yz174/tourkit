@@ -9,7 +9,7 @@ import {
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { TourContext, type TourContextValue } from "./context";
 import { TourHost } from "./TourHost";
-import type { Insets, Slots, TargetGeometry } from "./types";
+import type { Insets, ScrollHost, Slots, TargetGeometry, TargetNode } from "./types";
 import { CoachCard } from "./ui/CoachCard";
 import { ProgressDots } from "./ui/ProgressDots";
 import { Spotlight } from "./ui/Spotlight";
@@ -30,6 +30,7 @@ export type TourProviderProps<Ctx> = {
   nav?: NavAdapter;
   onEvent?: EventHandler;
   insets?: Insets;
+  scrollRef?: ScrollHost;
   components?: Partial<Slots>;
   debug?: boolean;
   children: ReactNode;
@@ -43,11 +44,13 @@ export function TourProvider<Ctx = unknown>({
   nav,
   onEvent,
   insets = NO_INSETS,
+  scrollRef,
   components,
   debug = false,
   children,
 }: TourProviderProps<Ctx>) {
   const registry = useRef<Map<string, TargetGeometry>>(new Map());
+  const nodes = useRef<Map<string, TargetNode>>(new Map());
   const [engine] = useState(
     () =>
       new TourEngine<Ctx>({
@@ -80,9 +83,11 @@ export function TourProvider<Ctx = unknown>({
       insets,
       components: { ...DEFAULT_SLOTS, ...components },
       geometry: registry.current,
+      nodes: nodes.current,
+      scrollRef: scrollRef ?? null,
       debug,
     }),
-    [engine, insets, components, debug],
+    [engine, insets, components, debug, scrollRef],
   );
 
   return (

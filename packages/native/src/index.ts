@@ -1,8 +1,10 @@
 export type {
   EventHandler,
+  Interaction,
   NavAdapter,
   Placement,
   Rect,
+  ScrollOptions,
   StorageAdapter,
   Theme,
   ThemeOverride,
@@ -23,9 +25,11 @@ export type {
   CardProps,
   Insets,
   ProgressProps,
+  ScrollHost,
   Slots,
   SpotlightGeometry,
   TargetGeometry,
+  TargetNode,
 } from "./types";
 export { CoachCard } from "./ui/CoachCard";
 export { holeMaskPath } from "./ui/geometry";
@@ -36,7 +40,9 @@ export {
   type PlacementResult,
   resolvePlacement,
 } from "./ui/placement";
+export { shieldRegions } from "./ui/regions";
 export { padRect, resolvePadding, resolveRadius } from "./ui/resolve";
 export { Spotlight } from "./ui/Spotlight";
-export { TouchShield } from "./ui/TouchShield";
+export { type ScrollBlock, scrollOffsetFor, scrollSettings } from "./ui/scroll";
+export { TouchShield, type TouchShieldProps } from "./ui/TouchShield";
 export { useTargetMeasure } from "./useTargetMeasure";

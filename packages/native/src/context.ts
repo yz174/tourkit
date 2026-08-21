@@ -1,12 +1,14 @@
 import type { TourEngine } from "@tourkit/core";
 import { createContext, useContext } from "react";
-import type { Insets, Slots, TargetGeometry } from "./types";
+import type { Insets, ScrollHost, Slots, TargetGeometry, TargetNode } from "./types";
 
 export type TourContextValue = {
   engine: TourEngine<unknown>;
   insets: Insets;
   components: Slots;
   geometry: Map<string, TargetGeometry>;
+  nodes: Map<string, TargetNode>;
+  scrollRef: ScrollHost | null;
   debug: boolean;
 };
 

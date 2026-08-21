@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AccessibilityInfo, StyleSheet, useWindowDimensions, View } from "react-native";
+import {
+  AccessibilityInfo,
+  findNodeHandle,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import Animated, {
   Easing,
   type EasingFunction,
@@ -10,9 +16,10 @@ import Animated, {
 } from "react-native-reanimated";
 import { useTourContext } from "./context";
 import { useTour, useTourSnapshot } from "./hooks";
-import type { SpotlightGeometry } from "./types";
+import type { SpotlightGeometry, TargetNode } from "./types";
 import { cardWidthFor, resolvePlacement } from "./ui/placement";
 import { padRect, resolvePadding, resolveRadius } from "./ui/resolve";
+import { scrollOffsetFor, scrollSettings } from "./ui/scroll";
 import { TouchShield } from "./ui/TouchShield";
 
 type AnyEasing = EasingFunction | EasingFunctionFactory;
@@ -26,7 +33,7 @@ const EASINGS: Record<string, AnyEasing | undefined> = {
 };
 
 export function TourHost() {
-  const { components, insets, geometry: registry } = useTourContext();
+  const { components, insets, geometry: registry, nodes, scrollRef } = useTourContext();
   const snapshot = useTourSnapshot();
   const { next, prev, skip, stop } = useTour();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
@@ -45,6 +52,7 @@ export function TourHost() {
 
   const placed = useRef(false);
   const lastTarget = useRef<string | null>(null);
+  const cardRef = useRef<TargetNode | null>(null);
 
   const { status, step, stepIndex, total, activeTarget, theme } = snapshot;
   const running = status !== "idle";
@@ -199,9 +207,31 @@ export function TourHost() {
   ]);
 
   useEffect(() => {
+    const scroller = scrollRef?.current;
+    const targetId = step?.target;
+    if (!running || !scroller || !targetId) return;
+    const { enabled, block } = scrollSettings(step?.scroll);
+    if (!enabled) return;
+    const node = nodes.get(targetId);
+    if (!node?.measureLayout) return;
+    node.measureLayout(
+      scroller as never,
+      (_x: number, y: number, _width: number, measuredHeight: number) => {
+        scroller.scrollTo({
+          y: scrollOffsetFor(y, measuredHeight, screenHeight, block),
+          animated: !reduceMotion,
+        });
+      },
+      () => {},
+    );
+  }, [running, step, nodes, scrollRef, screenHeight, reduceMotion]);
+
+  useEffect(() => {
     if (!step) return;
     const spoken = [step.title, step.body].filter(Boolean).join(". ");
     if (spoken) AccessibilityInfo.announceForAccessibility(spoken);
+    const handle = findNodeHandle(cardRef.current);
+    if (typeof handle === "number") AccessibilityInfo.setAccessibilityFocus(handle);
   }, [step]);
 
   const spotlight: SpotlightGeometry = useMemo(
@@ -223,12 +253,18 @@ export function TourHost() {
     <View
       accessibilityViewIsModal
       pointerEvents="box-none"
-      style={StyleSheet.absoluteFill}
+      style={[StyleSheet.absoluteFill, { zIndex: theme.zIndex }]}
       testID="tourkit-host"
     >
-      <TouchShield />
+      <TouchShield
+        interaction={step.interaction ?? "block"}
+        hole={hole ? padRect(hole, padding) : null}
+        onHolePress={next}
+      />
       <Backdrop geometry={spotlight} theme={theme} />
       <Animated.View
+        ref={cardRef}
+        accessible={false}
         pointerEvents="box-none"
         onLayout={(event) => setCardHeight(event.nativeEvent.layout.height)}
         style={[styles.cardWrap, { width: cardWidth }, cardStyle]}
