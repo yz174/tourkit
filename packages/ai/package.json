@@ -1,8 +1,11 @@
 {
   "name": "@tourkit/ai",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Generate a tourkit tour from a user's question.",
   "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
   "type": "module",
   "sideEffects": false,
   "main": "./dist/index.cjs",
@@ -29,7 +32,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@tourkit/core": "0.0.0",
+    "@tourkit/core": "0.1.0",
     "zod": "^4.4.3"
   },
   "peerDependencies": {
@@ -51,5 +54,19 @@
     "@anthropic-ai/sdk": "0.120.0",
     "@types/react": "19.2.18",
     "react": "19.2.8"
-  }
+  },
+  "keywords": [
+    "ai",
+    "tour",
+    "onboarding",
+    "anthropic",
+    "claude"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yz174/tourkit.git",
+    "directory": "packages/ai"
+  },
+  "homepage": "https://github.com/yz174/tourkit#readme",
+  "bugs": "https://github.com/yz174/tourkit/issues"
 }
