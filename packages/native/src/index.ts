@@ -41,6 +41,12 @@ export type {
   TargetGeometry,
   TargetNode,
 } from "./types";
+export {
+  type BlurModules,
+  type BlurViewComponent,
+  createBlurBackdrop,
+  type MaskedViewComponent,
+} from "./ui/BlurSpotlight";
 export { CoachCard } from "./ui/CoachCard";
 export { holeMaskPath } from "./ui/geometry";
 export { ProgressDots } from "./ui/ProgressDots";

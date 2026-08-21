@@ -9,7 +9,6 @@ import Animated, {
 } from "react-native-reanimated";
 import Svg, { Defs, Mask, Path, Rect as SvgRect } from "react-native-svg";
 import type { BackdropProps } from "../types";
-import { BlurSpotlight, loadBlurModules } from "./BlurSpotlight";
 import { holeMaskPath } from "./geometry";
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
@@ -21,20 +20,15 @@ function warnMissingBlur(): void {
   if (warnedAboutBlur) return;
   warnedAboutBlur = true;
   console.warn(
-    "tourkit: theme.blur is enabled but @react-native-masked-view/masked-view and expo-blur are " +
-      "not installed, so the dim scrim is being used instead. Install both and rebuild the app.",
+    "tourkit: theme.blur is enabled but no blur backdrop is mounted, so the dim scrim is being " +
+      "used instead. Install @react-native-masked-view/masked-view and expo-blur, then pass " +
+      "components={{ Backdrop: createBlurBackdrop({ MaskedView, BlurView }) }}.",
   );
 }
 
-export function Spotlight(props: BackdropProps) {
-  const blurAvailable = props.theme.blur.enabled && loadBlurModules() !== null;
-  if (props.theme.blur.enabled && !blurAvailable && __DEV__) warnMissingBlur();
-  if (blurAvailable) return <BlurSpotlight {...props} />;
-  return <DimSpotlight {...props} />;
-}
-
-function DimSpotlight({ geometry, theme, size }: BackdropProps) {
+export function Spotlight({ geometry, theme, size }: BackdropProps) {
   const { width, height } = size;
+  if (theme.blur.enabled && __DEV__) warnMissingBlur();
   const maskId = `tourkitHole${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   const breathe = useSharedValue(0);
   const ringWidth = theme.ring.width;
