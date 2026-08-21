@@ -1,8 +1,11 @@
 export type {
   EventHandler,
+  GateArgs,
+  Interaction,
   NavAdapter,
   Placement,
   Rect,
+  ScrollOptions,
   StorageAdapter,
   Theme,
   ThemeOverride,
@@ -11,7 +14,7 @@ export type {
   TourEventName,
   TourStep,
 } from "@tourkit/core";
-export { defaultTheme, mergeTheme } from "@tourkit/core";
+export { createNavAdapter, defaultTheme, mergeTheme, routeMatches } from "@tourkit/core";
 export { nextFocusTarget } from "./a11y/focus";
 export { useEngine, useTourContext } from "./context";
 export { holeClipPath, holePathData } from "./dom/clip";

@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { type TourConfig, TourProvider, useTour } from "../src/index";
+import { SharedDemo } from "./shared";
 
 const tours: TourConfig<unknown>[] = [
   {
@@ -85,8 +86,11 @@ function Demo() {
   );
 }
 
+const plan = new URLSearchParams(window.location.search).get("plan") === "pro" ? "pro" : "free";
+
 createRoot(document.getElementById("root") as HTMLElement).render(
   <StrictMode>
     <Demo />
+    <SharedDemo plan={plan} />
   </StrictMode>,
 );
