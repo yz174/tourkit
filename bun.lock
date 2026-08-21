@@ -127,6 +127,15 @@
       "bin": {
         "tourkit": "./dist/index.js",
       },
+      "devDependencies": {
+        "@tourkit/ai": "0.0.0",
+      },
+      "peerDependencies": {
+        "@tourkit/ai": ">=0.0.0",
+      },
+      "optionalPeers": [
+        "@tourkit/ai",
+      ],
     },
   },
   "packages": {
