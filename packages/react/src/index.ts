@@ -35,6 +35,14 @@ export {
   useTourTarget,
 } from "./hooks";
 export { buildManifest } from "./manifest";
+export {
+  cssPath,
+  describeElement,
+  type RecordedStep,
+  type Recording,
+  textOf,
+} from "./recorder/selector";
+export { TourRecorder, type TourRecorderProps } from "./recorder/TourRecorder";
 export { browserStorage, memoryStorage } from "./storage";
 export { TourHost } from "./TourHost";
 export { TourProvider, type TourProviderProps } from "./TourProvider";
