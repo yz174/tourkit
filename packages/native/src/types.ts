@@ -37,9 +37,12 @@ export type CardProps<Ctx = unknown> = {
   stop: () => void;
 };
 
+export type Size = { width: number; height: number };
+
 export type BackdropProps = {
   geometry: SpotlightGeometry;
   theme: Theme;
+  size: Size;
 };
 
 export type ProgressProps = {

@@ -16,7 +16,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useTourContext } from "./context";
 import { useTour, useTourSnapshot } from "./hooks";
-import type { SpotlightGeometry, TargetNode } from "./types";
+import type { Size, SpotlightGeometry, TargetNode } from "./types";
 import { cardWidthFor, resolvePlacement } from "./ui/placement";
 import { padRect, resolvePadding, resolveRadius } from "./ui/resolve";
 import { scrollOffsetFor, scrollSettings } from "./ui/scroll";
@@ -36,10 +36,16 @@ export function TourHost() {
   const { components, insets, geometry: registry, nodes, scrollRef } = useTourContext();
   const snapshot = useTourSnapshot();
   const { next, prev, skip, stop } = useTour();
-  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  const window = useWindowDimensions();
 
   const [reduceMotion, setReduceMotion] = useState(false);
   const [cardHeight, setCardHeight] = useState(0);
+  // The overlay covers its own host view, which under Android edge-to-edge is taller than the
+  // window `useWindowDimensions` reports. Measuring the host is the only size that matches what
+  // the scrim and the shield actually cover.
+  const [hostSize, setHostSize] = useState<Size | null>(null);
+  const size: Size = hostSize ?? { width: window.width, height: window.height };
+  const { width: screenWidth, height: screenHeight } = size;
 
   const x = useSharedValue(0);
   const y = useSharedValue(0);
@@ -253,6 +259,14 @@ export function TourHost() {
     <View
       accessibilityViewIsModal
       pointerEvents="box-none"
+      onLayout={(event) => {
+        const { width, height } = event.nativeEvent.layout;
+        setHostSize((current) =>
+          current && current.width === width && current.height === height
+            ? current
+            : { width, height },
+        );
+      }}
       style={[StyleSheet.absoluteFill, { zIndex: theme.zIndex }]}
       testID="tourkit-host"
     >
@@ -260,8 +274,9 @@ export function TourHost() {
         interaction={step.interaction ?? "block"}
         hole={hole ? padRect(hole, padding) : null}
         onHolePress={next}
+        size={size}
       />
-      <Backdrop geometry={spotlight} theme={theme} />
+      <Backdrop geometry={spotlight} theme={theme} size={size} />
       <Animated.View
         ref={cardRef}
         accessible={false}
