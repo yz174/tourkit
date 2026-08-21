@@ -1,5 +1,6 @@
 export type {
   EventHandler,
+  GateArgs,
   Interaction,
   NavAdapter,
   Placement,
@@ -13,7 +14,7 @@ export type {
   TourEventName,
   TourStep,
 } from "@tourkit/core";
-export { defaultTheme, mergeTheme } from "@tourkit/core";
+export { createNavAdapter, defaultTheme, mergeTheme, routeMatches } from "@tourkit/core";
 export { useEngine, useTourContext } from "./context";
 export { useTour, useTourSelector, useTourSnapshot, useTourState } from "./hooks";
 export { type AsyncStorageLike, createMemoryStorage, createStorageAdapter } from "./storage";
