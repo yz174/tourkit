@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { type TourConfig, TourProvider, useTour } from "../src/index";
+import { AskDemo } from "./ask";
 import { SharedDemo } from "./shared";
 
 const tours: TourConfig<unknown>[] = [
@@ -92,5 +93,6 @@ createRoot(document.getElementById("root") as HTMLElement).render(
   <StrictMode>
     <Demo />
     <SharedDemo plan={plan} />
+    <AskDemo />
   </StrictMode>,
 );
