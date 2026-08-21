@@ -1,8 +1,11 @@
 {
   "name": "@tourkit/native",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "React Native spotlight renderer for tourkit.",
   "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
   "type": "module",
   "sideEffects": false,
   "main": "./dist/index.cjs",
@@ -26,7 +29,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@tourkit/core": "0.0.0"
+    "@tourkit/core": "0.1.0"
   },
   "peerDependencies": {
     "react": ">=18.0.0",
@@ -43,5 +46,20 @@
     "react-native": "0.87.0",
     "react-native-reanimated": "4.5.3",
     "react-native-svg": "15.15.5"
-  }
+  },
+  "keywords": [
+    "react-native",
+    "expo",
+    "tour",
+    "onboarding",
+    "walkthrough",
+    "spotlight"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yz174/tourkit.git",
+    "directory": "packages/native"
+  },
+  "homepage": "https://github.com/yz174/tourkit#readme",
+  "bugs": "https://github.com/yz174/tourkit/issues"
 }
