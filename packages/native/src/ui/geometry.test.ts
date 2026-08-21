@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { holeMaskPath } from "./geometry";
+import { holeMaskPath, roundedRectPath } from "./geometry";
 
 const OUTER = "M0 0H400V800H0Z";
 
@@ -43,5 +43,21 @@ describe("holeMaskPath", () => {
     expect(path).toContain("M30 50");
     expect(path).toContain("H130");
     expect(path).toContain("V90");
+  });
+});
+
+describe("roundedRectPath", () => {
+  test("returns an empty path for a collapsed rect", () => {
+    expect(roundedRectPath(0, 0, 0, 40, 8)).toBe("");
+    expect(roundedRectPath(0, 0, 40, 0, 8)).toBe("");
+  });
+
+  test("clamps the radius to half the shorter side", () => {
+    const path = roundedRectPath(0, 0, 40, 20, 999);
+    expect(path.startsWith("M10 0")).toBe(true);
+  });
+
+  test("closes the path", () => {
+    expect(roundedRectPath(10, 20, 100, 40, 8).endsWith("Z")).toBe(true);
   });
 });

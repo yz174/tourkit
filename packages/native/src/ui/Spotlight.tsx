@@ -9,10 +9,9 @@ import Animated, {
 } from "react-native-reanimated";
 import Svg, { Defs, Mask, Path, Rect as SvgRect } from "react-native-svg";
 import type { BackdropProps } from "../types";
-import { holeMaskPath } from "./geometry";
+import { holeMaskPath, roundedRectPath } from "./geometry";
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
-const AnimatedRect = Animated.createAnimatedComponent(SvgRect);
 
 let warnedAboutBlur = false;
 
@@ -50,11 +49,13 @@ export function Spotlight({ geometry, theme, size }: BackdropProps) {
   }, [breathe, theme.ring.show, theme.ring.period]);
 
   const ringProps = useAnimatedProps(() => ({
-    x: geometry.x.value - ringWidth,
-    y: geometry.y.value - ringWidth,
-    width: Math.max(0, geometry.width.value + ringWidth * 2),
-    height: Math.max(0, geometry.height.value + ringWidth * 2),
-    rx: geometry.radius.value + ringWidth,
+    d: roundedRectPath(
+      geometry.x.value - ringWidth,
+      geometry.y.value - ringWidth,
+      geometry.width.value + ringWidth * 2,
+      geometry.height.value + ringWidth * 2,
+      geometry.radius.value + ringWidth,
+    ),
     opacity: 0.3 + breathe.value * 0.55,
   }));
 
@@ -87,7 +88,7 @@ export function Spotlight({ geometry, theme, size }: BackdropProps) {
         mask={`url(#${maskId})`}
       />
       {theme.ring.show ? (
-        <AnimatedRect
+        <AnimatedPath
           animatedProps={ringProps}
           fill="none"
           stroke={theme.ring.color ?? theme.accent}

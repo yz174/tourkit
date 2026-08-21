@@ -28,3 +28,30 @@ export function holeMaskPath(
 
   return outer + inner;
 }
+
+export function roundedRectPath(
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  cornerRadius: number,
+): string {
+  "worklet";
+  if (width <= 0 || height <= 0) return "";
+
+  const r = Math.max(0, Math.min(cornerRadius, width / 2, height / 2));
+  const right = x + width;
+  const bottom = y + height;
+
+  return (
+    `M${x + r} ${y}` +
+    `H${right - r}` +
+    `A${r} ${r} 0 0 1 ${right} ${y + r}` +
+    `V${bottom - r}` +
+    `A${r} ${r} 0 0 1 ${right - r} ${bottom}` +
+    `H${x + r}` +
+    `A${r} ${r} 0 0 1 ${x} ${bottom - r}` +
+    `V${y + r}` +
+    `A${r} ${r} 0 0 1 ${x + r} ${y}Z`
+  );
+}
