@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { type TourConfig, TourProvider, useTour } from "../src/index";
 import { AskDemo } from "./ask";
+import { recordedWalkthrough } from "./recorded-walkthrough.tour";
 import { SharedDemo } from "./shared";
 
 const tours: TourConfig<unknown>[] = [
@@ -35,6 +36,7 @@ const tours: TourConfig<unknown>[] = [
     version: 1,
     steps: [{ id: "deep", target: "#deep", title: "Aligned to start", scroll: { block: "start" } }],
   },
+  recordedWalkthrough,
   {
     id: "no-scroll",
     version: 1,
@@ -46,11 +48,13 @@ function Launcher() {
   const { start, running } = useTour();
   return (
     <div>
-      {["demo", "passthrough", "press", "scroll-start", "no-scroll"].map((id) => (
-        <button type="button" key={id} id={`launch-${id}`} onClick={() => start(id)}>
-          {id}
-        </button>
-      ))}
+      {["demo", "passthrough", "press", "scroll-start", "no-scroll", "recorded-walkthrough"].map(
+        (id) => (
+          <button type="button" key={id} id={`launch-${id}`} onClick={() => start(id)}>
+            {id}
+          </button>
+        ),
+      )}
       <span id="state">{running ? "running" : "idle"}</span>
     </div>
   );

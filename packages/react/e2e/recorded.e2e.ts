@@ -55,3 +55,74 @@ test("the recorded selector targets resolve to the real elements", async ({ page
 
   expect(Math.abs(hole.x - ((target?.x ?? 0) - 4))).toBeLessThan(2);
 });
+
+test("a broken selector is healed by the fingerprint, with one warning", async ({ page }) => {
+  const warnings: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "warning") warnings.push(message.text());
+  });
+
+  await page.goto("/");
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  await page.evaluate(() => document.querySelector("#hero")?.removeAttribute("id"));
+  expect(await page.locator("#hero").count()).toBe(0);
+
+  await page.click("#launch-recorded-walkthrough");
+  for (let step = 0; step < 3; step += 1) {
+    await page.click('[data-tourkit="next"]');
+    await page.waitForTimeout(150);
+  }
+
+  await expect(page.locator('[data-tourkit="card"]')).toContainText("Hero button");
+  await page.waitForTimeout(400);
+
+  const target = await page.getByRole("button", { name: "Hero button" }).boundingBox();
+  const hole = await page.evaluate(() => {
+    const clip = getComputedStyle(
+      document.querySelector('[data-tourkit="backdrop"]') as Element,
+    ).clipPath;
+    const data = clip.slice(clip.indexOf('"') + 1, clip.lastIndexOf('"'));
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", data.slice(data.indexOf("Z") + 1));
+    svg.appendChild(path);
+    document.body.appendChild(svg);
+    const box = path.getBBox();
+    svg.remove();
+    return { x: box.x, y: box.y };
+  });
+
+  expect(Math.abs(hole.x - ((target?.x ?? 0) - 4))).toBeLessThan(2);
+
+  const healWarnings = warnings.filter((line) => line.includes("fingerprint"));
+  expect(healWarnings).toHaveLength(1);
+  expect(healWarnings[0]).toContain("hero-button");
+  expect(healWarnings[0]).toContain("#hero");
+
+  await page.click('[data-tourkit="next"]');
+  await expect(page.locator('[data-tourkit="card"]')).toContainText("Inside modal");
+  await page.click('[data-tourkit="next"]');
+  await expect(page.locator('[data-tourkit="card"]')).toContainText("That is the tour");
+});
+
+test("an intact selector heals nothing and warns about nothing", async ({ page }) => {
+  const warnings: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "warning") warnings.push(message.text());
+  });
+
+  await page.goto("/");
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+
+  await page.click("#launch-recorded-walkthrough");
+  for (let step = 0; step < 5; step += 1) {
+    await page.click('[data-tourkit="next"]');
+    await page.waitForTimeout(150);
+  }
+
+  await expect(page.locator('[data-tourkit="card"]')).toContainText("That is the tour");
+  expect(warnings.filter((line) => line.includes("fingerprint"))).toHaveLength(0);
+});

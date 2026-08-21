@@ -23,11 +23,19 @@ export const recordedWalkthrough: TourConfig = {
       id: "hero-button",
       target: "#hero",
       title: "Hero button",
+      fingerprint: {
+        tag: "button",
+        text: "Hero button",
+      },
     },
     {
       id: "inside-modal",
       target: "#in-modal",
       title: "Inside modal",
+      fingerprint: {
+        tag: "button",
+        text: "Inside modal",
+      },
     },
     {
       id: "done",

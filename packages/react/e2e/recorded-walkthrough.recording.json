@@ -31,14 +31,22 @@
       "registered": false,
       "tag": "button",
       "text": "Hero button",
-      "route": "/"
+      "route": "/",
+      "fingerprint": {
+        "tag": "button",
+        "text": "Hero button"
+      }
     },
     {
       "target": "#in-modal",
       "registered": false,
       "tag": "button",
       "text": "Inside modal",
-      "route": "/"
+      "route": "/",
+      "fingerprint": {
+        "tag": "button",
+        "text": "Inside modal"
+      }
     }
   ]
 }
