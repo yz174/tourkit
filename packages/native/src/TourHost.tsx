@@ -60,7 +60,7 @@ export function TourHost() {
   const lastTarget = useRef<string | null>(null);
   const cardRef = useRef<TargetNode | null>(null);
 
-  const { status, step, stepIndex, total, activeTarget, theme } = snapshot;
+  const { status, step, stepIndex, total, activeTarget, theme, dismissible } = snapshot;
   const running = status !== "idle";
   const hole = activeTarget ? (snapshot.rects[activeTarget] ?? null) : null;
 
@@ -91,6 +91,7 @@ export function TourHost() {
         arrowSize: theme.arrow.size,
         cardRadius: theme.card.radius,
         preferred: step?.placement ?? "auto",
+        align: step?.align ?? "center",
       }),
     [
       hole,
@@ -293,6 +294,7 @@ export function TourHost() {
           theme={theme}
           isFirst={stepIndex === 0}
           isLast={stepIndex === total - 1}
+          dismissible={dismissible}
           next={next}
           prev={prev}
           skip={skip}

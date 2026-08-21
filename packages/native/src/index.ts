@@ -1,4 +1,5 @@
 export type {
+  Align,
   EventHandler,
   GateArgs,
   Interaction,
