@@ -1,3 +1,6 @@
+import type { Fingerprint } from "@tourkit/core";
+import { buildFingerprint } from "../dom/fingerprint";
+
 export type RecordedStep = {
   target: string;
   registered: boolean;
@@ -6,6 +9,7 @@ export type RecordedStep = {
   role?: string;
   text?: string;
   route?: string;
+  fingerprint?: Fingerprint;
 };
 
 export type Recording = {
@@ -83,5 +87,6 @@ export function describeElement(element: Element, route = ""): RecordedStep {
     ...(role ? { role } : {}),
     ...(text ? { text } : {}),
     ...(route ? { route } : {}),
+    fingerprint: buildFingerprint(element),
   };
 }

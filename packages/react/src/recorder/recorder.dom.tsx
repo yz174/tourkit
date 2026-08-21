@@ -90,6 +90,20 @@ describe("describeElement", () => {
       label: "Post a ride",
       text: "Go",
       route: "/",
+      fingerprint: { tag: "button", text: "Go", label: "Post a ride" },
+    });
+  });
+
+  test("captures a fingerprint for every step", () => {
+    document.body.innerHTML =
+      '<section><h2>Rides</h2><button aria-label="Cancel">×</button></section>';
+    const step = describeElement(document.querySelector("button") as Element);
+
+    expect(step.fingerprint).toEqual({
+      tag: "button",
+      text: "×",
+      label: "Cancel",
+      near: "Rides",
     });
   });
 
