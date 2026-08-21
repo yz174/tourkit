@@ -1,0 +1,44 @@
+{
+  "name": "Recorded walkthrough",
+  "createdAt": 0,
+  "steps": [
+    {
+      "target": "my-rides",
+      "registered": true,
+      "tag": "button",
+      "label": "My rides",
+      "text": "Rides",
+      "route": "/"
+    },
+    {
+      "target": "ride-menu",
+      "registered": true,
+      "tag": "button",
+      "label": "Ride options",
+      "text": "Options",
+      "route": "/"
+    },
+    {
+      "target": "cancel-ride",
+      "registered": true,
+      "tag": "button",
+      "label": "Cancel ride",
+      "text": "Cancel",
+      "route": "/"
+    },
+    {
+      "target": "#hero",
+      "registered": false,
+      "tag": "button",
+      "text": "Hero button",
+      "route": "/"
+    },
+    {
+      "target": "#in-modal",
+      "registered": false,
+      "tag": "button",
+      "text": "Inside modal",
+      "route": "/"
+    }
+  ]
+}
