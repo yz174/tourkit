@@ -1,5 +1,5 @@
 import type { Placement as FloatingPlacement } from "@floating-ui/dom";
-import type { Fingerprint, Placement, ScrollOptions } from "@tourkit/core";
+import type { Align, Fingerprint, Placement, ScrollOptions } from "@tourkit/core";
 import { healTarget } from "./fingerprint";
 
 export function resolveTarget(target: string, registry: Map<string, Element>): Element | null {
@@ -32,17 +32,14 @@ export function resolveWithFingerprint(
   return healed ? { element: healed, healed: true } : { element: null, healed: false };
 }
 
-export function toFloatingPlacement(placement: Placement): FloatingPlacement {
-  switch (placement) {
-    case "top":
-      return "top";
-    case "left":
-      return "left";
-    case "right":
-      return "right";
-    default:
-      return "bottom";
-  }
+export function toFloatingPlacement(
+  placement: Placement,
+  align: Align = "center",
+): FloatingPlacement {
+  const side =
+    placement === "top" || placement === "left" || placement === "right" ? placement : "bottom";
+  if (align === "center") return side;
+  return `${side}-${align}` as FloatingPlacement;
 }
 
 export function scrollSettings(scroll: boolean | ScrollOptions | undefined): {
