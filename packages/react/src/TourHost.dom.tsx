@@ -404,3 +404,142 @@ describe("act coverage", () => {
     });
   });
 });
+
+describe("interaction modes", () => {
+  const withInteraction = (interaction: "block" | "passthrough" | "advance-on-press") =>
+    [
+      {
+        id: "onboarding",
+        version: 1,
+        steps: [
+          { id: "one", target: "cta", title: "First stop", interaction },
+          { id: "two", target: "inbox", title: "Second stop" },
+        ],
+      },
+    ] as TourConfig<Ctx>[];
+
+  test("block is the default and covers the whole screen", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByText("start tour"));
+    await screen.findByText("First stop");
+
+    expect(document.querySelector('[data-tourkit="shield"]')).not.toBe(null);
+    expect(document.querySelector('[data-tourkit="hole-catcher"]')).toBe(null);
+    expect(
+      document.querySelector('[data-tourkit="root"]')?.getAttribute("data-tourkit-interaction"),
+    ).toBe("block");
+  });
+
+  test("passthrough removes the shield so the real element stays clickable", async () => {
+    const user = userEvent.setup();
+    render(<App tours={withInteraction("passthrough")} />);
+
+    await user.click(screen.getByText("start tour"));
+    await screen.findByText("First stop");
+
+    expect(document.querySelector('[data-tourkit="shield"]')).toBe(null);
+    expect(document.querySelector('[data-tourkit="hole-catcher"]')).toBe(null);
+  });
+
+  test("advance-on-press keeps the shield and adds a catcher over the hole", async () => {
+    const user = userEvent.setup();
+    render(<App tours={withInteraction("advance-on-press")} />);
+
+    await user.click(screen.getByText("start tour"));
+    await screen.findByText("First stop");
+
+    expect(document.querySelector('[data-tourkit="shield"]')).not.toBe(null);
+    const catcher = document.querySelector<HTMLElement>('[data-tourkit="hole-catcher"]');
+    expect(catcher).not.toBe(null);
+    expect(catcher?.style.left).toBe("96px");
+    expect(catcher?.style.top).toBe("196px");
+    expect(catcher?.style.width).toBe("128px");
+    expect(catcher?.style.height).toBe("52px");
+  });
+
+  test("pressing the catcher advances the tour", async () => {
+    const user = userEvent.setup();
+    render(<App tours={withInteraction("advance-on-press")} />);
+
+    await user.click(screen.getByText("start tour"));
+    await screen.findByText("First stop");
+
+    await user.click(document.querySelector('[data-tourkit="hole-catcher"]') as HTMLElement);
+
+    expect(await screen.findByText("Second stop")).toBeInTheDocument();
+  });
+
+  test("the catcher is reachable by name for screen readers", async () => {
+    const user = userEvent.setup();
+    render(<App tours={withInteraction("advance-on-press")} />);
+
+    await user.click(screen.getByText("start tour"));
+
+    expect(await screen.findByRole("button", { name: "Continue: First stop" })).toBeInTheDocument();
+  });
+});
+
+describe("resume", () => {
+  test("a remounted provider picks up where the tour stopped", async () => {
+    const shared = memoryStorage();
+    const user = userEvent.setup();
+    const first = render(<App storage={shared} />);
+
+    await user.click(screen.getByText("start tour"));
+    await screen.findByText("First stop");
+    await user.click(screen.getByRole("button", { name: "Next" }));
+    await screen.findByText("Second stop");
+
+    first.unmount();
+    document.body.innerHTML = "";
+
+    render(<App storage={shared} />);
+    await user.click(screen.getByText("start tour"));
+
+    expect(await screen.findByText("Second stop")).toBeInTheDocument();
+  });
+
+  test("a finished tour starts again from the beginning", async () => {
+    const shared = memoryStorage();
+    const user = userEvent.setup();
+    const first = render(<App storage={shared} />);
+
+    await user.click(screen.getByText("start tour"));
+    await screen.findByText("First stop");
+    await user.click(screen.getByRole("button", { name: "Next" }));
+    await screen.findByText("Second stop");
+    await user.click(screen.getByRole("button", { name: "Next" }));
+    await screen.findByText("All done");
+    await user.click(screen.getByRole("button", { name: "Done" }));
+
+    first.unmount();
+    document.body.innerHTML = "";
+
+    render(<App storage={shared} />);
+    await user.click(screen.getByText("start tour"));
+
+    expect(await screen.findByText("First stop")).toBeInTheDocument();
+  });
+
+  test("bumping the tour version discards a saved position", async () => {
+    const shared = memoryStorage();
+    const user = userEvent.setup();
+    const first = render(<App storage={shared} />);
+
+    await user.click(screen.getByText("start tour"));
+    await screen.findByText("First stop");
+    await user.click(screen.getByRole("button", { name: "Next" }));
+    await screen.findByText("Second stop");
+
+    first.unmount();
+    document.body.innerHTML = "";
+
+    const bumped = tours.map((tour) => ({ ...tour, version: 2 }));
+    render(<App storage={shared} tours={bumped} />);
+    await user.click(screen.getByText("start tour"));
+
+    expect(await screen.findByText("First stop")).toBeInTheDocument();
+  });
+});

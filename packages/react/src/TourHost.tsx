@@ -4,7 +4,12 @@ import { createPortal } from "react-dom";
 import { nextFocusTarget } from "./a11y/focus";
 import { useEngine, useTourContext } from "./context";
 import { holeClipPath } from "./dom/clip";
-import { resolveTarget, scrollIntoViewIfNeeded, toFloatingPlacement } from "./dom/resolve";
+import {
+  resolveTarget,
+  scrollIntoViewIfNeeded,
+  scrollSettings,
+  toFloatingPlacement,
+} from "./dom/resolve";
 import { useTour, useTourSnapshot } from "./hooks";
 import type { CardPlacement } from "./types";
 
@@ -82,8 +87,10 @@ export function TourHost() {
   }, [running, target, registry]);
 
   useEffect(() => {
-    if (!element || step?.scroll === false) return;
-    scrollIntoViewIfNeeded(element, reduceMotion ? "auto" : "smooth");
+    if (!element) return;
+    const { enabled, block, behavior } = scrollSettings(step?.scroll);
+    if (!enabled) return;
+    scrollIntoViewIfNeeded(element, block, reduceMotion ? "auto" : behavior);
   }, [element, step, reduceMotion]);
 
   const reposition = useCallback(async () => {
@@ -206,18 +213,55 @@ export function TourHost() {
   if (!mounted || !running || !step) return null;
 
   const { Card, Backdrop } = components;
+  const interaction = step.interaction ?? "block";
+  const holePadding = step.padding ?? theme.spotlight.padding;
+  const holeBox = rect
+    ? {
+        x: rect.x - holePadding,
+        y: rect.y - holePadding,
+        width: rect.width + holePadding * 2,
+        height: rect.height + holePadding * 2,
+      }
+    : null;
   const transition = animating ? `clip-path ${theme.motion.morph}ms ${EASING}` : "none";
   const cardTransition = animating
     ? `left ${theme.motion.travel}ms ${EASING}, top ${theme.motion.travel}ms ${EASING}`
     : "none";
 
   const tree = (
-    <div data-tourkit="root" data-tourkit-state={active ? "active" : "resolving"}>
-      <div
-        data-tourkit="shield"
-        aria-hidden="true"
-        style={{ position: "fixed", inset: 0, pointerEvents: "auto" }}
-      />
+    <div
+      data-tourkit="root"
+      data-tourkit-state={active ? "active" : "resolving"}
+      data-tourkit-interaction={interaction}
+      style={{ position: "fixed", inset: 0, zIndex: theme.zIndex, pointerEvents: "none" }}
+    >
+      {interaction === "passthrough" ? null : (
+        <div
+          data-tourkit="shield"
+          aria-hidden="true"
+          style={{ position: "fixed", inset: 0, pointerEvents: "auto" }}
+        />
+      )}
+      {interaction === "advance-on-press" && holeBox ? (
+        <button
+          type="button"
+          data-tourkit="hole-catcher"
+          aria-label={step.title ? `Continue: ${step.title}` : "Continue the tour"}
+          onClick={next}
+          style={{
+            position: "fixed",
+            left: holeBox.x,
+            top: holeBox.y,
+            width: holeBox.width,
+            height: holeBox.height,
+            padding: 0,
+            border: "none",
+            background: "transparent",
+            cursor: "pointer",
+            pointerEvents: "auto",
+          }}
+        />
+      ) : null}
       <Backdrop clipPath={clipPath} transition={transition} theme={theme} styled={styled} />
       <div
         ref={cardRef}

@@ -1,5 +1,5 @@
 import type { Placement as FloatingPlacement } from "@floating-ui/dom";
-import type { Placement } from "@tourkit/core";
+import type { Placement, ScrollOptions } from "@tourkit/core";
 
 export function resolveTarget(target: string, registry: Map<string, Element>): Element | null {
   const registered = registry.get(target);
@@ -29,7 +29,27 @@ export function toFloatingPlacement(placement: Placement): FloatingPlacement {
   }
 }
 
-export function scrollIntoViewIfNeeded(element: Element, behavior: ScrollBehavior): void {
+export function scrollSettings(scroll: boolean | ScrollOptions | undefined): {
+  enabled: boolean;
+  block: ScrollLogicalPosition;
+  behavior: ScrollBehavior;
+} {
+  if (scroll === false) return { enabled: false, block: "center", behavior: "smooth" };
+  if (scroll === true || scroll === undefined) {
+    return { enabled: true, block: "center", behavior: "smooth" };
+  }
+  return {
+    enabled: true,
+    block: scroll.block ?? "center",
+    behavior: scroll.behavior ?? "smooth",
+  };
+}
+
+export function scrollIntoViewIfNeeded(
+  element: Element,
+  block: ScrollLogicalPosition,
+  behavior: ScrollBehavior,
+): void {
   const rect = element.getBoundingClientRect();
   const visible =
     rect.top >= 0 &&
@@ -37,5 +57,5 @@ export function scrollIntoViewIfNeeded(element: Element, behavior: ScrollBehavio
     rect.bottom <= window.innerHeight &&
     rect.right <= window.innerWidth;
   if (visible) return;
-  element.scrollIntoView({ block: "center", inline: "center", behavior });
+  element.scrollIntoView({ block, inline: "center", behavior });
 }

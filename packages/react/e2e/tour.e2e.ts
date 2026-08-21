@@ -33,7 +33,7 @@ async function advance(page: Page) {
 }
 
 test("the cutout lands on the target as the browser lays it out", async ({ page }) => {
-  await page.click("#launch");
+  await page.click("#launch-demo");
   await expect(page.locator('[data-tourkit="card"]')).toContainText("The hero");
 
   const target = await page.locator("#hero").boundingBox();
@@ -48,7 +48,7 @@ test("the cutout lands on the target as the browser lays it out", async ({ page 
 });
 
 test("the card is anchored to the target and stays inside the viewport", async ({ page }) => {
-  await page.click("#launch");
+  await page.click("#launch-demo");
   await expect(page.locator('[data-tourkit="card"]')).toBeVisible();
 
   const target = await page.locator("#hero").boundingBox();
@@ -66,7 +66,7 @@ test("the card is anchored to the target and stays inside the viewport", async (
 test("a target inside a scroll container is scrolled into view and tracked while scrolling", async ({
   page,
 }) => {
-  await page.click("#launch");
+  await page.click("#launch-demo");
   await advance(page);
   await expect(page.locator('[data-tourkit="card"]')).toContainText("Inside a scroller");
   await page.waitForTimeout(500);
@@ -89,7 +89,7 @@ test("a target inside a scroll container is scrolled into view and tracked while
 });
 
 test("a target inside a stacked modal is cut out correctly", async ({ page }) => {
-  await page.click("#launch");
+  await page.click("#launch-demo");
   await advance(page);
   await expect(page.locator('[data-tourkit="card"]')).toContainText("Inside a scroller");
   await advance(page);
@@ -105,7 +105,7 @@ test("a target inside a stacked modal is cut out correctly", async ({ page }) =>
 });
 
 test("the final step with no target centres the card and collapses the hole", async ({ page }) => {
-  await page.click("#launch");
+  await page.click("#launch-demo");
   for (let step = 0; step < 3; step += 1) {
     await advance(page);
     await page.waitForTimeout(300);
@@ -123,7 +123,7 @@ test("the final step with no target centres the card and collapses the hole", as
 });
 
 test("the shield blocks clicks on the page underneath", async ({ page }) => {
-  await page.click("#launch");
+  await page.click("#launch-demo");
   await expect(page.locator('[data-tourkit="card"]')).toBeVisible();
 
   const hit = await page.locator("#hero").evaluate((node) => {
@@ -136,7 +136,7 @@ test("the shield blocks clicks on the page underneath", async ({ page }) => {
 });
 
 test("Escape ends the tour and removes the overlay", async ({ page }) => {
-  await page.click("#launch");
+  await page.click("#launch-demo");
   await expect(page.locator('[data-tourkit="card"]')).toBeVisible();
 
   await page.keyboard.press("Escape");
@@ -145,7 +145,7 @@ test("Escape ends the tour and removes the overlay", async ({ page }) => {
 });
 
 test("resizing the window keeps the cutout on the target", async ({ page }) => {
-  await page.click("#launch");
+  await page.click("#launch-demo");
   await expect(page.locator('[data-tourkit="card"]')).toBeVisible();
 
   await page.setViewportSize({ width: 700, height: 700 });
@@ -159,7 +159,7 @@ test("resizing the window keeps the cutout on the target", async ({ page }) => {
 });
 
 test("focus lands in the card and Tab stays inside it", async ({ page }) => {
-  await page.click("#launch");
+  await page.click("#launch-demo");
   await expect(page.locator('[data-tourkit="card"]')).toBeVisible();
 
   const focused = await page.evaluate(

@@ -13,26 +13,62 @@ const tours: TourConfig<unknown>[] = [
       { id: "done", target: null, title: "Finished" },
     ],
   },
+  {
+    id: "passthrough",
+    version: 1,
+    steps: [
+      { id: "hero", target: "#hero", title: "Press it yourself", interaction: "passthrough" },
+    ],
+  },
+  {
+    id: "press",
+    version: 1,
+    steps: [
+      { id: "hero", target: "#hero", title: "Press to continue", interaction: "advance-on-press" },
+      { id: "after", target: "#in-modal", title: "You pressed it" },
+    ],
+  },
+  {
+    id: "scroll-start",
+    version: 1,
+    steps: [{ id: "deep", target: "#deep", title: "Aligned to start", scroll: { block: "start" } }],
+  },
+  {
+    id: "no-scroll",
+    version: 1,
+    steps: [{ id: "deep", target: "#deep", title: "Left where it was", scroll: false }],
+  },
 ];
 
 function Launcher() {
   const { start, running } = useTour();
   return (
-    <button type="button" id="launch" onClick={() => start("demo")}>
-      {running ? "running" : "start"}
-    </button>
+    <div>
+      {["demo", "passthrough", "press", "scroll-start", "no-scroll"].map((id) => (
+        <button type="button" key={id} id={`launch-${id}`} onClick={() => start(id)}>
+          {id}
+        </button>
+      ))}
+      <span id="state">{running ? "running" : "idle"}</span>
+    </div>
   );
 }
 
 const rows = Array.from({ length: 40 }, (_, index) => ({ id: `row ${index}`, index }));
 
+function countHeroPress() {
+  const log = document.getElementById("hero-log");
+  if (log) log.textContent = String(Number(log.textContent ?? "0") + 1);
+}
+
 function Demo() {
   return (
     <TourProvider tours={tours} storage={undefined}>
       <Launcher />
-      <button type="button" id="hero">
+      <button type="button" id="hero" onClick={countHeroPress}>
         Hero button
       </button>
+      <span id="hero-log">0</span>
       <div id="scroller">
         {rows.map((row) => (
           <div className="row" key={row.id} id={row.index === 20 ? "deep" : undefined}>

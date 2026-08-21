@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test } from "vitest";
-import { resolveTarget, toFloatingPlacement } from "./resolve";
+import { resolveTarget, scrollSettings, toFloatingPlacement } from "./resolve";
 
 beforeEach(() => {
   document.body.innerHTML = "";
@@ -54,5 +54,36 @@ describe("toFloatingPlacement", () => {
 
   test("auto starts at the bottom and lets flip decide", () => {
     expect(toFloatingPlacement("auto")).toBe("bottom");
+  });
+});
+
+describe("scrollSettings", () => {
+  test("undefined and true both mean centred and smooth", () => {
+    expect(scrollSettings(undefined)).toEqual({
+      enabled: true,
+      block: "center",
+      behavior: "smooth",
+    });
+    expect(scrollSettings(true)).toEqual({ enabled: true, block: "center", behavior: "smooth" });
+  });
+
+  test("false disables scrolling", () => {
+    expect(scrollSettings(false).enabled).toBe(false);
+  });
+
+  test("an options object selects block and behavior", () => {
+    expect(scrollSettings({ block: "start", behavior: "auto" })).toEqual({
+      enabled: true,
+      block: "start",
+      behavior: "auto",
+    });
+  });
+
+  test("a partial options object keeps the defaults for the rest", () => {
+    expect(scrollSettings({ block: "end" })).toEqual({
+      enabled: true,
+      block: "end",
+      behavior: "smooth",
+    });
   });
 });
