@@ -608,6 +608,59 @@ describe("setOptions", () => {
   });
 });
 
+describe("ad-hoc tours", () => {
+  test("a config passed straight to start runs without being registered", async () => {
+    const engine = new TourEngine<Ctx>({ tours: [], context });
+
+    await engine.start({
+      id: "generated",
+      version: 1,
+      steps: [{ id: "a", title: "Generated" }, { id: "b" }],
+    });
+
+    expect(engine.getSnapshot().tourId).toBe("generated");
+    expect(engine.getSnapshot().step?.title).toBe("Generated");
+    expect(engine.getSnapshot().total).toBe(2);
+  });
+
+  test("an ad-hoc tour honours when, themes and advancing", async () => {
+    const engine = new TourEngine<Ctx>({ tours: [], context, theme: { accent: "#base" } });
+
+    await engine.start({
+      id: "generated",
+      version: 1,
+      theme: { accent: "#generated" },
+      steps: [{ id: "a" }, { id: "hidden", when: (ctx) => ctx.isHost }, { id: "b" }],
+    });
+
+    expect(engine.getSnapshot().total).toBe(2);
+    expect(engine.getSnapshot().theme.accent).toBe("#generated");
+
+    await engine.advance();
+    expect(engine.getSnapshot().step?.id).toBe("b");
+  });
+
+  test("the ad-hoc config is dropped once the tour ends", async () => {
+    const engine = new TourEngine<Ctx>({ tours: [tour([{ id: "a" }])], context });
+
+    await engine.start({ id: "generated", version: 1, steps: [{ id: "only" }] });
+    await engine.advance();
+    expect(engine.getSnapshot().status).toBe("idle");
+
+    await engine.start("generated");
+    expect(engine.getSnapshot().status).toBe("idle");
+    expect(engine.getSnapshot().tourId).toBe(null);
+  });
+
+  test("a registered tour still wins when started by id", async () => {
+    const engine = new TourEngine<Ctx>({ tours: [tour([{ id: "registered" }])], context });
+
+    await engine.start("onboarding");
+
+    expect(engine.getSnapshot().step?.id).toBe("registered");
+  });
+});
+
 describe("unknown tours", () => {
   test("starting a tour that does not exist changes nothing", async () => {
     const engine = new TourEngine<Ctx>({ tours: [tour([{ id: "a" }])], context });

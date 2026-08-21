@@ -44,6 +44,7 @@ export class TourEngine<Ctx = unknown> {
   #listeners = new Set<() => void>();
   #rectWaiters = new Map<string, Set<() => void>>();
   #runToken = 0;
+  #adhoc: TourConfig<Ctx> | null = null;
   #snapshot: EngineSnapshot<Ctx>;
 
   constructor(options: EngineOptions<Ctx>) {
@@ -70,12 +71,14 @@ export class TourEngine<Ctx = unknown> {
     this.#notify();
   }
 
-  async start(tourId: string): Promise<void> {
-    const config = this.#options.tours.find((tour) => tour.id === tourId);
+  async start(tour: string | TourConfig<Ctx>): Promise<void> {
+    const config =
+      typeof tour === "string" ? this.#options.tours.find((entry) => entry.id === tour) : tour;
     if (!config) return;
 
     const token = ++this.#runToken;
-    this.#tourId = tourId;
+    this.#adhoc = typeof tour === "string" ? null : tour;
+    this.#tourId = config.id;
     this.#stepIndex = 0;
     this.#status = "resolving";
     this.#notify();
@@ -149,6 +152,7 @@ export class TourEngine<Ctx = unknown> {
 
   #config(): TourConfig<Ctx> | null {
     if (this.#tourId === null) return null;
+    if (this.#adhoc?.id === this.#tourId) return this.#adhoc;
     return this.#options.tours.find((tour) => tour.id === this.#tourId) ?? null;
   }
 
@@ -270,6 +274,7 @@ export class TourEngine<Ctx = unknown> {
     this.#runToken++;
     this.#status = "idle";
     this.#tourId = null;
+    this.#adhoc = null;
     this.#stepIndex = 0;
     this.#rects = {};
     this.#rectWaiters.clear();

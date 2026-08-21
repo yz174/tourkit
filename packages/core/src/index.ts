@@ -27,6 +27,8 @@ export type {
   Placement,
   ScrollOptions,
   StorageAdapter,
+  TargetDescriptor,
+  TargetManifest,
   TourConfig,
   TourEvent,
   TourEventName,

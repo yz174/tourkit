@@ -74,6 +74,14 @@ export type NavAdapter = {
   navigate(route: string): void | Promise<void>;
 };
 
+export type TargetDescriptor = {
+  id: string;
+  label?: string | undefined;
+  route?: string | undefined;
+};
+
+export type TargetManifest = TargetDescriptor[];
+
 export type PersistedTour = {
   outcome: TourOutcome;
   stepId: string;
