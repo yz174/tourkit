@@ -15,7 +15,8 @@
     "format": "biome check --write .",
     "test:dom": "bun run --filter='@tourkit/react' test:dom",
     "check:peers": "bun run scripts/check-peers.ts",
-    "test:e2e": "bun run --filter='@tourkit/react' test:e2e"
+    "test:e2e": "bun run --filter='@tourkit/react' test:e2e",
+    "playground": "bun run --filter='@tourkit/react' playground"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.14",

@@ -28,9 +28,10 @@
     "build": "tsup",
     "typecheck": "tsc --noEmit",
     "test:dom": "vitest run",
-    "e2e:build": "bun build ./e2e/fixture.tsx --outfile=./e2e/bundle.js --target=browser",
+    "e2e:build": "bun build ./e2e/fixture.tsx --outfile=./e2e/bundle.js --target=browser && bun build ./e2e/recorder.tsx --outfile=./e2e/recorder-bundle.js --target=browser",
     "e2e:serve": "bun run ./e2e/serve.ts",
-    "test:e2e": "bun run e2e:build && playwright test"
+    "test:e2e": "bun run e2e:build && playwright test",
+    "playground": "bun run e2e:build && bun run ./e2e/serve.ts"
   },
   "dependencies": {
     "@floating-ui/dom": "^1.8.0",
