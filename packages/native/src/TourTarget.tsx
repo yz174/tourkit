@@ -10,10 +10,11 @@ export type TourTargetProps = {
   children: ReactNode;
   radius?: number;
   padding?: number;
+  label?: string;
   style?: StyleProp<ViewStyle>;
 };
 
-export function TourTarget({ id, children, radius, padding, style }: TourTargetProps) {
+export function TourTarget({ id, children, radius, padding, label, style }: TourTargetProps) {
   const { geometry, nodes } = useTourContext();
   const { ref, measure } = useTargetMeasure(id);
 
@@ -24,11 +25,12 @@ export function TourTarget({ id, children, radius, padding, style }: TourTargetP
     geometry.set(id, {
       ...(radius === undefined ? {} : { radius }),
       ...(padding === undefined ? {} : { padding }),
+      ...(label === undefined ? {} : { label }),
     });
     return () => {
       geometry.delete(id);
     };
-  }, [geometry, id, radius, padding]);
+  }, [geometry, id, radius, padding, label]);
 
   useEffect(() => {
     const node = ref.current as TargetNode | null;

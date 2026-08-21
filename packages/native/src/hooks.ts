@@ -1,6 +1,6 @@
-import type { EngineSnapshot, Rect } from "@tourkit/core";
+import type { EngineSnapshot, Rect, TargetManifest, TourConfig } from "@tourkit/core";
 import { useCallback, useSyncExternalStore } from "react";
-import { useEngine } from "./context";
+import { useEngine, useTourContext } from "./context";
 
 export function useTourSnapshot<Ctx = unknown>(): EngineSnapshot<Ctx> {
   const engine = useEngine<Ctx>();
@@ -17,7 +17,10 @@ export function useTour() {
   const engine = useEngine();
   const running = useTourSelector((snapshot) => snapshot.status !== "idle");
 
-  const start = useCallback((tourId: string) => void engine.start(tourId), [engine]);
+  const start = useCallback(
+    (tour: string | TourConfig<unknown>) => void engine.start(tour),
+    [engine],
+  );
   const stop = useCallback(() => void engine.stop(), [engine]);
   const next = useCallback(() => void engine.advance(), [engine]);
   const prev = useCallback(() => void engine.back(), [engine]);
@@ -39,4 +42,16 @@ export function useTourState<Ctx = unknown>() {
   const stop = useCallback(() => void engine.stop(), [engine]);
 
   return { ...snapshot, rect, next, prev, skip, stop };
+}
+
+export function useTargetManifest(): () => TargetManifest {
+  const { geometry, nav } = useTourContext();
+  return useCallback(() => {
+    const route = nav?.getRoute() ?? "";
+    return [...geometry.entries()].map(([id, entry]) => ({
+      id,
+      ...(entry.label ? { label: entry.label } : {}),
+      ...(route ? { route } : {}),
+    }));
+  }, [geometry, nav]);
 }

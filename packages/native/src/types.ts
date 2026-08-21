@@ -12,7 +12,7 @@ export type ScrollHost = RefObject<{
 
 export type TargetNode = ComponentRef<typeof View>;
 
-export type TargetGeometry = { radius?: number; padding?: number };
+export type TargetGeometry = { radius?: number; padding?: number; label?: string };
 
 export type SpotlightGeometry = {
   x: SharedValue<number>;

@@ -7,6 +7,8 @@ export type {
   Rect,
   ScrollOptions,
   StorageAdapter,
+  TargetDescriptor,
+  TargetManifest,
   Theme,
   ThemeOverride,
   TourConfig,
@@ -16,7 +18,13 @@ export type {
 } from "@tourkit/core";
 export { createNavAdapter, defaultTheme, mergeTheme, routeMatches } from "@tourkit/core";
 export { useEngine, useTourContext } from "./context";
-export { useTour, useTourSelector, useTourSnapshot, useTourState } from "./hooks";
+export {
+  useTargetManifest,
+  useTour,
+  useTourSelector,
+  useTourSnapshot,
+  useTourState,
+} from "./hooks";
 export { type AsyncStorageLike, createMemoryStorage, createStorageAdapter } from "./storage";
 export { TourHost } from "./TourHost";
 export { TourProvider, type TourProviderProps } from "./TourProvider";

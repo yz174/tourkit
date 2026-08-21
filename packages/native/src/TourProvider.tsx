@@ -85,9 +85,10 @@ export function TourProvider<Ctx = unknown>({
       geometry: registry.current,
       nodes: nodes.current,
       scrollRef: scrollRef ?? null,
+      nav: nav ?? null,
       debug,
     }),
-    [engine, insets, components, debug, scrollRef],
+    [engine, insets, components, debug, scrollRef, nav],
   );
 
   return (
