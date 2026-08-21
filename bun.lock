@@ -15,7 +15,7 @@
     },
     "examples/docs-samples": {
       "name": "@tourkit/example-docs-samples",
-      "version": "0.0.0",
+      "version": "0.1.0",
       "dependencies": {
         "@tourkit/ai": "0.0.0",
         "@tourkit/core": "0.0.0",
@@ -31,7 +31,7 @@
     },
     "examples/native-app": {
       "name": "@tourkit/example-native-app",
-      "version": "0.0.0",
+      "version": "0.1.0",
       "dependencies": {
         "@tourkit/core": "0.0.0",
         "@tourkit/example-shared-tour": "0.0.0",
@@ -47,16 +47,16 @@
     },
     "examples/shared-tour": {
       "name": "@tourkit/example-shared-tour",
-      "version": "0.0.0",
+      "version": "0.1.0",
       "dependencies": {
         "@tourkit/core": "0.0.0",
       },
     },
     "packages/ai": {
       "name": "@tourkit/ai",
-      "version": "0.0.0",
+      "version": "0.1.0",
       "dependencies": {
-        "@tourkit/core": "0.0.0",
+        "@tourkit/core": "0.1.0",
         "zod": "^4.4.3",
       },
       "devDependencies": {
@@ -75,11 +75,11 @@
     },
     "packages/core": {
       "name": "@tourkit/core",
-      "version": "0.0.0",
+      "version": "0.1.0",
     },
     "packages/native": {
       "name": "@tourkit/native",
-      "version": "0.0.0",
+      "version": "0.1.0",
       "dependencies": {
         "@tourkit/core": "0.0.0",
       },
@@ -99,7 +99,7 @@
     },
     "packages/react": {
       "name": "@tourkit/react",
-      "version": "0.0.0",
+      "version": "0.1.0",
       "dependencies": {
         "@floating-ui/dom": "^1.8.0",
         "@tourkit/core": "0.0.0",
@@ -123,12 +123,12 @@
     },
     "tools/cli": {
       "name": "@tourkit/cli",
-      "version": "0.0.0",
+      "version": "0.1.0",
       "bin": {
         "tourkit": "./dist/index.js",
       },
       "devDependencies": {
-        "@tourkit/ai": "0.0.0",
+        "@tourkit/ai": "0.1.0",
       },
       "peerDependencies": {
         "@tourkit/ai": ">=0.0.0",
