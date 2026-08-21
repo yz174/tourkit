@@ -1,3 +1,12 @@
+export type Fingerprint = {
+  tag: string;
+  text?: string;
+  role?: string;
+  label?: string;
+  near?: string;
+  index?: number;
+};
+
 export type RecordedStep = {
   target: string;
   registered: boolean;
@@ -6,6 +15,7 @@ export type RecordedStep = {
   role?: string;
   text?: string;
   route?: string;
+  fingerprint?: Fingerprint;
 };
 
 export type Recording = {
@@ -84,6 +94,9 @@ export function generateTourFile(recording: Recording, drafts: DraftedCopy[] = [
     lines.push(`      title: ${quote(title)},`);
     if (body) lines.push(`      body: ${quote(body)},`);
     if (multiRoute && step.route) lines.push(`      route: ${quote(step.route)},`);
+    if (!step.registered && step.fingerprint) {
+      lines.push(...fingerprintLines(step.fingerprint));
+    }
     lines.push("    },");
   });
 
@@ -99,6 +112,16 @@ export function generateTourFile(recording: Recording, drafts: DraftedCopy[] = [
   lines.push("");
 
   return lines.join("\n");
+}
+
+function fingerprintLines(fingerprint: Fingerprint): string[] {
+  const entries: string[] = [`        tag: ${quote(fingerprint.tag)},`];
+  if (fingerprint.role) entries.push(`        role: ${quote(fingerprint.role)},`);
+  if (fingerprint.label) entries.push(`        label: ${quote(fingerprint.label)},`);
+  if (fingerprint.text) entries.push(`        text: ${quote(fingerprint.text)},`);
+  if (fingerprint.near) entries.push(`        near: ${quote(fingerprint.near)},`);
+  if (fingerprint.index) entries.push(`        index: ${fingerprint.index},`);
+  return ["      fingerprint: {", ...entries, "      },"];
 }
 
 export function unregisteredTargets(recording: Recording): RecordedStep[] {
