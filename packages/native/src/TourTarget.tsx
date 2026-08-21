@@ -118,15 +118,16 @@ export function TourTarget({ id, children, radius, padding, label, style }: Tour
       onLayout={() => {
         measure();
         measureChildRef();
-        // The wrapper lays out after its child, so a null box here means the child accepted
-        // neither onLayout nor a ref and the hole is the wrapper's box, margins included.
-        if (__DEV__ && !warned.current && only !== null && childBox.value === null) {
+        if (__DEV__ && !warned.current && only !== null) {
           warned.current = true;
-          console.warn(
-            `tourkit: TourTarget "${id}" wraps a component that forwards neither onLayout nor a ` +
-              "ref, so the spotlight is measured from the wrapper and includes the child's " +
-              "margins. Forward onLayout to that component's root view, or wrap the view itself.",
-          );
+          setTimeout(() => {
+            if (childBox.value !== null) return;
+            console.warn(
+              `tourkit: TourTarget "${id}" wraps a component that forwards neither onLayout nor ` +
+                "a ref, so the spotlight is measured from the wrapper and includes the child's " +
+                "margins. Forward onLayout to that component's root view, or wrap the view itself.",
+            );
+          }, 0);
         }
       }}
     >
