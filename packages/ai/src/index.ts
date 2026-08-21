@@ -1,6 +1,12 @@
 export type { TargetDescriptor, TargetManifest, TourConfig, TourStep } from "@tourkit/core";
 export { type AskOptions, askTourkit, cacheKey } from "./client";
-export { buildUserPrompt, SYSTEM_PROMPT } from "./prompt";
+export {
+  buildDraftPrompt,
+  buildUserPrompt,
+  DRAFT_SYSTEM_PROMPT,
+  type DraftPromptStep,
+  SYSTEM_PROMPT,
+} from "./prompt";
 export { type AskStatus, type UseTourkitAskOptions, useTourkitAsk } from "./react";
 export {
   type AskRequest,

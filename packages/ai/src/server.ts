@@ -1,6 +1,12 @@
 import type { TargetManifest } from "@tourkit/core";
-import { buildUserPrompt, SYSTEM_PROMPT } from "./prompt";
-import { askRequestSchema, generatedTourSchema } from "./schema";
+import { buildDraftPrompt, buildUserPrompt, DRAFT_SYSTEM_PROMPT, SYSTEM_PROMPT } from "./prompt";
+import {
+  askRequestSchema,
+  draftedCopySchema,
+  generatedTourSchema,
+  type Recording,
+  recordingSchema,
+} from "./schema";
 import { validateGenerated } from "./validate";
 
 export type GenerateInput = { question: string; manifest: TargetManifest };
@@ -93,7 +99,7 @@ export function anthropicGenerator(options: AnthropicGeneratorOptions = {}): Tou
   return async ({ question, manifest }) => {
     if (options.client) {
       const response = await options.client.messages.parse(
-        requestBody(model, question, manifest, undefined),
+        requestBody(model, SYSTEM_PROMPT, buildUserPrompt(question, manifest), undefined),
       );
       return response.parsed_output;
     }
@@ -101,7 +107,7 @@ export function anthropicGenerator(options: AnthropicGeneratorOptions = {}): Tou
     loading ??= load();
     const { client, outputFormat } = await loading;
     const response = await client.messages.parse(
-      requestBody(model, question, manifest, outputFormat),
+      requestBody(model, SYSTEM_PROMPT, buildUserPrompt(question, manifest), outputFormat),
     );
     return response.parsed_output;
   };
@@ -109,15 +115,59 @@ export function anthropicGenerator(options: AnthropicGeneratorOptions = {}): Tou
 
 function requestBody(
   model: string,
-  question: string,
-  manifest: TargetManifest,
+  system: string,
+  user: string,
   outputFormat: unknown,
 ): Record<string, unknown> {
   return {
     model,
     max_tokens: 16000,
-    system: SYSTEM_PROMPT,
-    messages: [{ role: "user", content: buildUserPrompt(question, manifest) }],
+    system,
+    messages: [{ role: "user", content: user }],
     ...(outputFormat ? { output_config: { format: outputFormat } } : {}),
+  };
+}
+
+export type CopyDraft = { title: string; body?: string | undefined };
+
+export type Drafter = (recording: Recording) => Promise<CopyDraft[]>;
+
+export function anthropicDrafter(options: AnthropicGeneratorOptions = {}): Drafter {
+  const model = options.model ?? "claude-opus-5";
+  let loading: Promise<Loaded> | null = null;
+
+  const load = async (): Promise<Loaded> => {
+    const [sdk, helpers] = await Promise.all([
+      import("@anthropic-ai/sdk"),
+      import("@anthropic-ai/sdk/helpers/zod"),
+    ]);
+    const client =
+      options.client ??
+      (new sdk.default(
+        options.apiKey ? { apiKey: options.apiKey } : {},
+      ) as unknown as AnthropicLike);
+    return { client, outputFormat: helpers.zodOutputFormat(draftedCopySchema) };
+  };
+
+  return async (input) => {
+    const recording = recordingSchema.parse(input);
+    const user = buildDraftPrompt(recording);
+
+    let resolved: Loaded;
+    if (options.client) {
+      resolved = { client: options.client, outputFormat: undefined };
+    } else {
+      loading ??= load();
+      resolved = await loading;
+    }
+    const { client, outputFormat } = resolved;
+
+    const response = await client.messages.parse(
+      requestBody(model, DRAFT_SYSTEM_PROMPT, user, outputFormat),
+    );
+
+    const parsed = draftedCopySchema.safeParse(response.parsed_output);
+    if (!parsed.success) return [];
+    return parsed.data.steps.slice(0, recording.steps.length);
   };
 }

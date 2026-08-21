@@ -21,5 +21,38 @@ export function buildUserPrompt(question: string, manifest: TargetManifest): str
     return `- ${entry.id}${label}${route}`;
   });
 
-  return [`Targets available right now:`, ...targets, ``, `Question: ${question}`].join("\n");
+  return ["Targets available right now:", ...targets, "", `Question: ${question}`].join("\n");
+}
+
+export const DRAFT_SYSTEM_PROMPT = `You write the copy for a product tour that someone recorded by clicking through their own app.
+
+You are given the elements they clicked, in order, with whatever the app knows about each one.
+
+Rules:
+- Return exactly one entry per recorded step, in the same order.
+- Titles are at most 6 words, sentence case, no trailing period.
+- Bodies are one short sentence explaining why the user would touch this, or omitted when the title says enough.
+- Write for someone looking at the highlighted element. Do not describe how it looks and do not say "click here".
+- Do not invent features the elements do not suggest.`;
+
+export type DraftPromptStep = {
+  target: string;
+  tag: string;
+  label?: string | undefined;
+  role?: string | undefined;
+  text?: string | undefined;
+  route?: string | undefined;
+};
+
+export function buildDraftPrompt(recording: { name: string; steps: DraftPromptStep[] }): string {
+  const steps = recording.steps.map((step, index) => {
+    const parts = [`${index + 1}. <${step.tag}>`];
+    if (step.role) parts.push(`role=${step.role}`);
+    if (step.label) parts.push(`label=${JSON.stringify(step.label)}`);
+    if (step.text) parts.push(`text=${JSON.stringify(step.text)}`);
+    if (step.route) parts.push(`on ${step.route}`);
+    return parts.join(" ");
+  });
+
+  return [`Tour name: ${recording.name}`, "", "Recorded steps:", ...steps].join("\n");
 }

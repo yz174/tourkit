@@ -2,9 +2,14 @@ import { describe, expect, test } from "bun:test";
 import { join } from "node:path";
 import type { TargetManifest } from "@tourkit/core";
 import { askTourkit, cacheKey } from "./client";
-import { buildUserPrompt, SYSTEM_PROMPT } from "./prompt";
+import { buildDraftPrompt, buildUserPrompt, DRAFT_SYSTEM_PROMPT, SYSTEM_PROMPT } from "./prompt";
 import { askRequestSchema } from "./schema";
-import { anthropicGenerator, createTourkitHandler, type TourGenerator } from "./server";
+import {
+  anthropicDrafter,
+  anthropicGenerator,
+  createTourkitHandler,
+  type TourGenerator,
+} from "./server";
 import { validateGenerated } from "./validate";
 
 const manifest: TargetManifest = [
@@ -378,5 +383,120 @@ describe("askRequestSchema", () => {
     const huge = Array.from({ length: 500 }, (_, index) => ({ id: `t-${index}` }));
 
     expect(askRequestSchema.safeParse({ question: "q", manifest: huge }).success).toBe(false);
+  });
+});
+
+describe("buildDraftPrompt", () => {
+  const recording = {
+    name: "Driver onboarding",
+    steps: [
+      { target: "post-ride", tag: "button", label: "Post a ride", route: "/" },
+      { target: "#inbox", tag: "a", text: "Messages", role: "link" },
+    ],
+  };
+
+  test("numbers the steps and includes what the app knows", () => {
+    const prompt = buildDraftPrompt(recording);
+
+    expect(prompt).toContain("Tour name: Driver onboarding");
+    expect(prompt).toContain('1. <button> label="Post a ride" on /');
+    expect(prompt).toContain('2. <a> role=link text="Messages"');
+  });
+
+  test("a step with nothing but a tag still appears", () => {
+    expect(buildDraftPrompt({ name: "x", steps: [{ target: "t", tag: "div" }] })).toContain(
+      "1. <div>",
+    );
+  });
+});
+
+describe("DRAFT_SYSTEM_PROMPT", () => {
+  test("bans the two things that make tour copy useless", () => {
+    expect(DRAFT_SYSTEM_PROMPT).toContain("click here");
+    expect(DRAFT_SYSTEM_PROMPT).toContain("Do not invent");
+  });
+});
+
+describe("anthropicDrafter", () => {
+  const recording = {
+    name: "Driver onboarding",
+    createdAt: 0,
+    steps: [
+      { target: "post-ride", registered: true, tag: "button", label: "Post a ride" },
+      { target: "inbox", registered: true, tag: "button", label: "Messages" },
+    ],
+  };
+
+  test("returns one draft per recorded step", async () => {
+    const draft = anthropicDrafter({
+      client: {
+        messages: {
+          parse: async () => ({
+            parsed_output: {
+              steps: [
+                { title: "Offer a seat", body: "Pick who rides with you." },
+                { title: "Read messages" },
+              ],
+            },
+          }),
+        },
+      },
+    });
+
+    expect(await draft(recording)).toEqual([
+      { title: "Offer a seat", body: "Pick who rides with you." },
+      { title: "Read messages" },
+    ]);
+  });
+
+  test("never returns more drafts than there were steps", async () => {
+    const draft = anthropicDrafter({
+      client: {
+        messages: {
+          parse: async () => ({
+            parsed_output: {
+              steps: [{ title: "a" }, { title: "b" }, { title: "c" }, { title: "d" }],
+            },
+          }),
+        },
+      },
+    });
+
+    expect(await draft(recording)).toHaveLength(2);
+  });
+
+  test("a malformed reply yields no drafts rather than throwing", async () => {
+    const draft = anthropicDrafter({
+      client: { messages: { parse: async () => ({ parsed_output: { nope: true } }) } },
+    });
+
+    expect(await draft(recording)).toEqual([]);
+  });
+
+  test("the draft prompt reaches the model", async () => {
+    let body: Record<string, unknown> = {};
+    const draft = anthropicDrafter({
+      client: {
+        messages: {
+          parse: async (sent) => {
+            body = sent;
+            return { parsed_output: { steps: [{ title: "a" }, { title: "b" }] } };
+          },
+        },
+      },
+    });
+
+    await draft(recording);
+
+    expect(body.system).toBe(DRAFT_SYSTEM_PROMPT);
+    expect(JSON.stringify(body.messages)).toContain("Post a ride");
+  });
+
+  test("a recording with no steps is rejected", async () => {
+    const draft = anthropicDrafter({
+      client: { messages: { parse: async () => ({ parsed_output: { steps: [] } }) } },
+    });
+
+    await expect(draft({ name: "x", createdAt: 0, steps: [] })).rejects.toThrow();
   });
 });
