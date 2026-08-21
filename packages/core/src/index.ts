@@ -19,6 +19,7 @@ export {
 } from "./theme";
 export type {
   EventHandler,
+  Fingerprint,
   GateArgs,
   GateTimeoutPolicy,
   Interaction,

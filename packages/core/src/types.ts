@@ -32,6 +32,7 @@ export type TourStep<Ctx = unknown> = {
   scroll?: boolean | ScrollOptions;
   padding?: number;
   radius?: number | "auto";
+  fingerprint?: Fingerprint;
   theme?: ThemeOverride;
 };
 
@@ -72,6 +73,15 @@ export type NavAdapter = {
   getRoute(): string;
   matches(route: string): boolean;
   navigate(route: string): void | Promise<void>;
+};
+
+export type Fingerprint = {
+  tag: string;
+  text?: string | undefined;
+  role?: string | undefined;
+  label?: string | undefined;
+  near?: string | undefined;
+  index?: number | undefined;
 };
 
 export type TargetDescriptor = {
