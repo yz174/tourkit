@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - run: bun run lint
+      - run: bun run check:peers
+      - run: bun run build
+      - run: bun run --filter='@tourkit/*' typecheck
+      - run: bun test
+      - run: bun run test:dom
+      - run: bunx playwright install --with-deps chromium
+      - run: bun run test:e2e
