@@ -4,6 +4,7 @@ import type { View } from "react-native";
 import {
   measure,
   runOnJS,
+  type SharedValue,
   useAnimatedRef,
   useFrameCallback,
   useSharedValue,
@@ -13,7 +14,9 @@ import { useTourSelector } from "./hooks";
 
 const EPSILON = 0.5;
 
-export function useTargetMeasure(id: string) {
+export type ChildBox = { x: number; y: number; width: number; height: number };
+
+export function useTargetMeasure(id: string, childBox: SharedValue<ChildBox | null>) {
   const engine = useEngine();
   const ref = useAnimatedRef<View>();
   const last = useSharedValue<Rect | null>(null);
@@ -33,20 +36,32 @@ export function useTargetMeasure(id: string) {
     if (!node?.measureInWindow) return;
     node.measureInWindow((x, y, width, height) => {
       if (width === 0 && height === 0) return;
-      last.value = { x, y, width, height };
-      push({ x, y, width, height });
+      const child = childBox.value;
+      const rect = child
+        ? { x: x + child.x, y: y + child.y, width: child.width, height: child.height }
+        : { x, y, width, height };
+      last.value = rect;
+      push(rect);
     });
-  }, [ref, last, push]);
+  }, [ref, last, push, childBox]);
 
   const frame = useFrameCallback(() => {
     const measured = measure(ref);
     if (measured === null) return;
-    const next = {
-      x: measured.pageX,
-      y: measured.pageY,
-      width: measured.width,
-      height: measured.height,
-    };
+    const child = childBox.value;
+    const next = child
+      ? {
+          x: measured.pageX + child.x,
+          y: measured.pageY + child.y,
+          width: child.width,
+          height: child.height,
+        }
+      : {
+          x: measured.pageX,
+          y: measured.pageY,
+          width: measured.width,
+          height: measured.height,
+        };
     const previous = last.value;
     if (
       previous !== null &&
