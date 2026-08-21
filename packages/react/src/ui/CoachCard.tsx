@@ -26,6 +26,7 @@ export function CoachCard({
   placement,
   theme,
   styled,
+  classNames,
   isLast,
   next,
 }: CardProps) {
@@ -35,6 +36,7 @@ export function CoachCard({
 
   return (
     <div
+      className={["tourkit-card", classNames.card].filter(Boolean).join(" ")}
       data-tourkit="card"
       data-tourkit-placement={placement.side}
       style={
@@ -52,6 +54,7 @@ export function CoachCard({
     >
       {position ? (
         <span
+          className={["tourkit-arrow", classNames.arrow].filter(Boolean).join(" ")}
           data-tourkit="arrow"
           style={{
             position: "absolute",
@@ -65,17 +68,26 @@ export function CoachCard({
       ) : null}
 
       {step.title ? (
-        <div data-tourkit="title" style={styled ? theme.text.title : undefined}>
+        <div
+          className="tourkit-title"
+          data-tourkit="title"
+          style={styled ? theme.text.title : undefined}
+        >
           {step.title}
         </div>
       ) : null}
       {step.body ? (
-        <div data-tourkit="body" style={styled ? { ...theme.text.body, marginTop: 4 } : undefined}>
+        <div
+          className="tourkit-body"
+          data-tourkit="body"
+          style={styled ? { ...theme.text.body, marginTop: 4 } : undefined}
+        >
           {step.body}
         </div>
       ) : null}
 
       <div
+        className="tourkit-footer"
         data-tourkit="footer"
         style={
           styled
@@ -92,6 +104,7 @@ export function CoachCard({
         <Progress index={index} total={total} theme={theme} styled={styled} />
         <button
           type="button"
+          className="tourkit-next"
           data-tourkit="next"
           onClick={next}
           style={

@@ -1,8 +1,9 @@
 import type { BackdropProps } from "../types";
 
-export function Overlay({ clipPath, transition, theme, styled }: BackdropProps) {
+export function Overlay({ clipPath, transition, theme, styled, className }: BackdropProps) {
   return (
     <div
+      className={["tourkit-overlay", className].filter(Boolean).join(" ")}
       data-tourkit="backdrop"
       aria-hidden="true"
       style={{
@@ -13,6 +14,12 @@ export function Overlay({ clipPath, transition, theme, styled }: BackdropProps) 
         transition,
         ...(styled
           ? { backgroundColor: theme.scrim.color, opacity: theme.scrim.opacity }
+          : undefined),
+        ...(theme.blur.enabled
+          ? {
+              backdropFilter: `blur(${theme.blur.radius}px)`,
+              WebkitBackdropFilter: `blur(${theme.blur.radius}px)`,
+            }
           : undefined),
       }}
     />
