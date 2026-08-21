@@ -5,7 +5,7 @@ import { nextFocusTarget } from "./a11y/focus";
 import { useEngine, useTourContext } from "./context";
 import { holeClipPath } from "./dom/clip";
 import {
-  resolveTarget,
+  resolveWithFingerprint,
   scrollIntoViewIfNeeded,
   scrollSettings,
   toFloatingPlacement,
@@ -38,6 +38,7 @@ export function TourHost() {
   const arrowRef = useRef<HTMLDivElement | null>(null);
   const lastTarget = useRef<string | null>(null);
   const placedOnce = useRef(false);
+  const warned = useRef(new Set<string>());
 
   const { status, step, stepIndex, total, theme } = snapshot;
   const running = status !== "idle";
@@ -74,8 +75,20 @@ export function TourHost() {
       return;
     }
     const find = () => {
-      const found = resolveTarget(target, registry);
-      if (found) setElement((current) => (current === found ? current : found));
+      const { element: found, healed } = resolveWithFingerprint(
+        target,
+        registry,
+        step?.fingerprint,
+      );
+      if (!found) return null;
+      const key = `${snapshot.tourId}:${step?.id}`;
+      if (healed && !warned.current.has(key)) {
+        warned.current.add(key);
+        console.warn(
+          `tourkit: step "${step?.id}" could not find "${target}" and matched it by fingerprint instead. Update the target before it stops matching.`,
+        );
+      }
+      setElement((current) => (current === found ? current : found));
       return found;
     };
     if (find()) return;
@@ -84,7 +97,7 @@ export function TourHost() {
     });
     observer.observe(document.documentElement, { childList: true, subtree: true });
     return () => observer.disconnect();
-  }, [running, target, registry]);
+  }, [running, target, registry, step, snapshot.tourId]);
 
   useEffect(() => {
     if (!element) return;
@@ -129,6 +142,7 @@ export function TourHost() {
     if (!running) {
       placedOnce.current = false;
       lastTarget.current = null;
+      warned.current.clear();
       setAnimating(false);
     }
   }, [running]);

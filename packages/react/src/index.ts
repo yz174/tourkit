@@ -1,5 +1,6 @@
 export type {
   EventHandler,
+  Fingerprint,
   GateArgs,
   Interaction,
   NavAdapter,
@@ -21,7 +22,15 @@ export { nextFocusTarget } from "./a11y/focus";
 export { useEngine, useTourContext } from "./context";
 export { holeClipPath, holePathData } from "./dom/clip";
 export {
+  buildFingerprint,
+  healTarget,
+  nearestHeading,
+  scoreCandidate,
+} from "./dom/fingerprint";
+export {
+  type Resolution,
   resolveTarget,
+  resolveWithFingerprint,
   scrollIntoViewIfNeeded,
   scrollSettings,
   toFloatingPlacement,

@@ -1,5 +1,6 @@
 import type { Placement as FloatingPlacement } from "@floating-ui/dom";
-import type { Placement, ScrollOptions } from "@tourkit/core";
+import type { Fingerprint, Placement, ScrollOptions } from "@tourkit/core";
+import { healTarget } from "./fingerprint";
 
 export function resolveTarget(target: string, registry: Map<string, Element>): Element | null {
   const registered = registry.get(target);
@@ -14,6 +15,21 @@ export function resolveTarget(target: string, registry: Map<string, Element>): E
   } catch {
     return null;
   }
+}
+
+export type Resolution = { element: Element | null; healed: boolean };
+
+export function resolveWithFingerprint(
+  target: string,
+  registry: Map<string, Element>,
+  fingerprint?: Fingerprint,
+): Resolution {
+  const direct = resolveTarget(target, registry);
+  if (direct) return { element: direct, healed: false };
+  if (!fingerprint) return { element: null, healed: false };
+
+  const healed = healTarget(fingerprint);
+  return healed ? { element: healed, healed: true } : { element: null, healed: false };
 }
 
 export function toFloatingPlacement(placement: Placement): FloatingPlacement {
