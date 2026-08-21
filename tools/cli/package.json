@@ -16,5 +16,16 @@
   },
   "publishConfig": {
     "access": "public"
+  },
+  "peerDependencies": {
+    "@tourkit/ai": ">=0.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@tourkit/ai": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@tourkit/ai": "0.0.0"
   }
 }

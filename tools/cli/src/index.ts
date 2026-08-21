@@ -1,6 +1,9 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { createServer } from "node:http";
 import { dirname, join } from "node:path";
+import type { CopyDraft, Recording } from "./codegen";
 import { detectProject, type Manifest, type ProjectKind, packagesFor } from "./detect";
+import { createRecordHandler, nodeListener, reportRecording } from "./record";
 import { nextSteps, scaffoldFiles } from "./scaffold";
 
 async function readManifest(cwd: string): Promise<Manifest | null> {
@@ -53,11 +56,55 @@ async function init(cwd: string, dir: string): Promise<number> {
   return 0;
 }
 
-const [command = "", ...rest] = process.argv.slice(2);
-
-if (command !== "init") {
-  console.error("usage: tourkit init [directory]");
-  process.exit(1);
+async function loadDrafter(): Promise<((recording: Recording) => Promise<CopyDraft[]>) | null> {
+  try {
+    const ai = (await import("@tourkit/ai/server")) as {
+      anthropicDrafter: (
+        options: Record<string, unknown>,
+      ) => (r: Recording) => Promise<CopyDraft[]>;
+    };
+    return ai.anthropicDrafter({});
+  } catch {
+    console.error("tourkit: --draft needs @tourkit/ai and @anthropic-ai/sdk installed.");
+    return null;
+  }
 }
 
-process.exit(await init(process.cwd(), rest[0] ?? "src/tour"));
+async function record(cwd: string, outDir: string, port: number, draft: boolean): Promise<void> {
+  const drafter = draft ? await loadDrafter() : null;
+
+  const handle = createRecordHandler({
+    cwd,
+    outDir,
+    ...(drafter ? { draft: drafter } : {}),
+    onWritten: (path, recording) => {
+      for (const line of reportRecording(path, recording)) console.log(line);
+    },
+  });
+
+  createServer(nodeListener(handle)).listen(port, "127.0.0.1");
+
+  console.log(`tourkit: listening on http://127.0.0.1:${port}`);
+  console.log(`tourkit: render <TourRecorder /> in your app, click through the tour, press Save.`);
+  console.log(`tourkit: tours will be written to ${outDir}`);
+}
+
+const [command = "", ...rest] = process.argv.slice(2);
+
+if (command === "init") {
+  process.exit(await init(process.cwd(), rest[0] ?? "src/tour"));
+}
+
+if (command === "record") {
+  const positional = rest.filter((argument) => !argument.startsWith("--"));
+  await record(
+    process.cwd(),
+    positional[0] ?? "src/tour",
+    Number(process.env.TOURKIT_PORT ?? 5178),
+    rest.includes("--draft"),
+  );
+} else {
+  console.error("usage: tourkit init [directory]");
+  console.error("       tourkit record [directory] [--draft]");
+  process.exit(1);
+}
