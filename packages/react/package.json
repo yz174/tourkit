@@ -52,6 +52,7 @@
     "@types/react-dom": "^19.2.4",
     "happy-dom": "^20.11.6",
     "vitest": "^4.1.11",
-    "@tourkit/example-shared-tour": "0.0.0"
+    "@tourkit/example-shared-tour": "0.0.0",
+    "@tourkit/ai": "0.0.0"
   }
 }
