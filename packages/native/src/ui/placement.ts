@@ -1,4 +1,4 @@
-import type { Placement, Rect } from "@tourkit/core";
+import type { Align, Placement, Rect } from "@tourkit/core";
 
 export type Insets = { top: number; bottom: number; left: number; right: number };
 
@@ -14,6 +14,7 @@ export type PlacementInput = {
   arrowSize: number;
   cardRadius: number;
   preferred: Placement;
+  align: Align;
 };
 
 export type PlacementResult = {
@@ -45,6 +46,7 @@ export function resolvePlacement(input: PlacementInput): PlacementResult {
     arrowSize,
     cardRadius,
     preferred,
+    align,
   } = input;
 
   const topLimit = insets.top + margin;
@@ -71,11 +73,13 @@ export function resolvePlacement(input: PlacementInput): PlacementResult {
 
   const top = side === "bottom" ? below : Math.max(topLimit, above);
 
-  const left = clamp(
-    hole.x + hole.width / 2 - cardWidth / 2,
-    margin,
-    screenWidth - margin - cardWidth,
-  );
+  const anchored =
+    align === "start"
+      ? hole.x
+      : align === "end"
+        ? hole.x + hole.width - cardWidth
+        : hole.x + hole.width / 2 - cardWidth / 2;
+  const left = clamp(anchored, margin, screenWidth - margin - cardWidth);
 
   const arrowLeft = clamp(
     hole.x + hole.width / 2 - left - arrowSize / 2,

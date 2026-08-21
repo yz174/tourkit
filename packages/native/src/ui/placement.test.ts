@@ -13,6 +13,7 @@ const base: PlacementInput = {
   arrowSize: 14,
   cardRadius: 16,
   preferred: "auto",
+  align: "center",
 };
 
 const at = (input: Partial<PlacementInput>) => resolvePlacement({ ...base, ...input });
@@ -141,5 +142,43 @@ describe("resolvePlacement insets", () => {
 
     expect(fits.side).toBe("bottom");
     expect(doesNot.side).toBe("top");
+  });
+});
+
+describe("align", () => {
+  test("center puts the card over the middle of the hole", () => {
+    const wide = {
+      screenWidth: 900,
+      cardWidth: 320,
+      hole: { x: 300, y: 300, width: 200, height: 44 },
+    };
+    expect(at({ ...wide, align: "center" }).left).toBe(240);
+  });
+
+  test("start lines the card up with the left edge of the hole", () => {
+    const wide = {
+      screenWidth: 900,
+      cardWidth: 320,
+      hole: { x: 300, y: 300, width: 200, height: 44 },
+    };
+    expect(at({ ...wide, align: "start" }).left).toBe(300);
+  });
+
+  test("end lines the card up with the right edge of the hole", () => {
+    const wide = {
+      screenWidth: 900,
+      cardWidth: 320,
+      hole: { x: 300, y: 300, width: 200, height: 44 },
+    };
+    expect(at({ ...wide, align: "end" }).left).toBe(180);
+  });
+
+  test("align never pushes the card past the margin", () => {
+    const result = at({ align: "start", hole: { x: 380, y: 300, width: 120, height: 44 } });
+    expect(result.left).toBe(390 - 16 - 320);
+  });
+
+  test("a null target ignores align and centres on the screen", () => {
+    expect(at({ hole: null, align: "end" }).left).toBe(Math.round((390 - 320) / 2));
   });
 });
