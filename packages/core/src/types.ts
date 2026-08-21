@@ -2,6 +2,7 @@ import type { Rect } from "./rect";
 import type { ThemeOverride } from "./theme";
 
 export type Placement = "auto" | "top" | "bottom" | "left" | "right";
+export type Align = "start" | "center" | "end";
 export type Interaction = "block" | "passthrough" | "advance-on-press";
 export type TourStatus = "idle" | "resolving" | "active";
 export type TourOutcome = "pending" | "completed" | "skipped";
@@ -28,7 +29,9 @@ export type TourStep<Ctx = unknown> = {
   onEnter?: (context: Ctx) => void | Promise<void>;
   onAdvance?: (context: Ctx) => void | Promise<void>;
   placement?: Placement;
+  align?: Align;
   interaction?: Interaction;
+  dismissible?: boolean;
   scroll?: boolean | ScrollOptions;
   padding?: number;
   radius?: number | "auto";
@@ -42,6 +45,7 @@ export type TourConfig<Ctx = unknown> = {
   entryRoute?: string;
   steps: TourStep<Ctx>[];
   theme?: ThemeOverride;
+  dismissible?: boolean;
 };
 
 export type TourEventName =

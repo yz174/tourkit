@@ -33,6 +33,7 @@ export type EngineSnapshot<Ctx> = {
   activeTarget: string | null;
   rects: Record<string, Rect>;
   theme: Theme;
+  dismissible: boolean;
 };
 
 export class TourEngine<Ctx = unknown> {
@@ -319,6 +320,7 @@ export class TourEngine<Ctx = unknown> {
       activeTarget: this.#status === "active" ? (step?.target ?? null) : null,
       rects: this.#rects,
       theme: mergeTheme(this.#options.theme, config?.theme, step?.theme),
+      dismissible: step?.dismissible ?? config?.dismissible ?? true,
     };
   }
 

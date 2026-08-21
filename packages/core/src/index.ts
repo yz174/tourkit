@@ -1,3 +1,4 @@
+export { contrastRatio, isDark, luminance } from "./contrast";
 export type { EngineOptions, EngineSnapshot } from "./engine";
 export { TourEngine } from "./engine";
 export {
@@ -13,11 +14,14 @@ export {
   defaultTheme,
   type FontWeight,
   mergeTheme,
+  type ProgressStyle,
+  type TextContrast,
   type TextStyle,
   type Theme,
   type ThemeOverride,
 } from "./theme";
 export type {
+  Align,
   EventHandler,
   Fingerprint,
   GateArgs,
