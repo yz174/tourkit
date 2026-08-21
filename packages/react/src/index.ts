@@ -7,6 +7,8 @@ export type {
   Rect,
   ScrollOptions,
   StorageAdapter,
+  TargetDescriptor,
+  TargetManifest,
   Theme,
   ThemeOverride,
   TourConfig,
@@ -24,7 +26,15 @@ export {
   scrollSettings,
   toFloatingPlacement,
 } from "./dom/resolve";
-export { useTour, useTourSelector, useTourSnapshot, useTourState, useTourTarget } from "./hooks";
+export {
+  useTargetManifest,
+  useTour,
+  useTourSelector,
+  useTourSnapshot,
+  useTourState,
+  useTourTarget,
+} from "./hooks";
+export { buildManifest } from "./manifest";
 export { browserStorage, memoryStorage } from "./storage";
 export { TourHost } from "./TourHost";
 export { TourProvider, type TourProviderProps } from "./TourProvider";

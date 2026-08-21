@@ -1,6 +1,7 @@
-import type { EngineSnapshot, Rect } from "@tourkit/core";
+import type { EngineSnapshot, Rect, TargetManifest, TourConfig } from "@tourkit/core";
 import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
 import { useEngine, useTourContext } from "./context";
+import { buildManifest } from "./manifest";
 
 export function useTourSnapshot<Ctx = unknown>(): EngineSnapshot<Ctx> {
   const engine = useEngine<Ctx>();
@@ -17,7 +18,10 @@ export function useTour() {
   const engine = useEngine();
   const running = useTourSelector((snapshot) => snapshot.status !== "idle");
 
-  const start = useCallback((tourId: string) => void engine.start(tourId), [engine]);
+  const start = useCallback(
+    (tour: string | TourConfig<unknown>) => void engine.start(tour),
+    [engine],
+  );
   const stop = useCallback(() => void engine.stop(), [engine]);
   const next = useCallback(() => void engine.advance(), [engine]);
   const prev = useCallback(() => void engine.back(), [engine]);
@@ -53,4 +57,12 @@ export function useTourTarget<T extends Element = HTMLElement>(id: string) {
   }, [registry, id]);
 
   return ref;
+}
+
+export function useTargetManifest(): () => TargetManifest {
+  const { registry } = useTourContext();
+  return useCallback(
+    () => buildManifest(registry, typeof window === "undefined" ? "" : window.location.pathname),
+    [registry],
+  );
 }
