@@ -1,5 +1,5 @@
 import { useId } from "react";
-import { StyleSheet, useWindowDimensions } from "react-native";
+import { StyleSheet } from "react-native";
 import Animated, { useAnimatedProps } from "react-native-reanimated";
 import Svg, { Defs, Mask, Path, Rect as SvgRect } from "react-native-svg";
 import type { BackdropProps } from "../types";
@@ -7,8 +7,8 @@ import { holeMaskPath } from "./geometry";
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 
-export function Spotlight({ geometry, theme }: BackdropProps) {
-  const { width, height } = useWindowDimensions();
+export function Spotlight({ geometry, theme, size }: BackdropProps) {
+  const { width, height } = size;
   const maskId = `tourkitHole${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
 
   const animatedProps = useAnimatedProps(() => ({

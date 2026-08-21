@@ -1,15 +1,17 @@
 import type { Interaction, Rect } from "@tourkit/core";
-import { Pressable, StyleSheet, useWindowDimensions } from "react-native";
+import { Pressable, StyleSheet } from "react-native";
+import type { Size } from "../types";
 import { shieldRegions } from "./regions";
 
 export type TouchShieldProps = {
   interaction: Interaction;
   hole: Rect | null;
   onHolePress: () => void;
+  size: Size;
 };
 
-export function TouchShield({ interaction, hole, onHolePress }: TouchShieldProps) {
-  const { width, height } = useWindowDimensions();
+export function TouchShield({ interaction, hole, onHolePress, size }: TouchShieldProps) {
+  const { width, height } = size;
 
   if (interaction === "block") {
     return <Pressable style={StyleSheet.absoluteFill} accessible={false} testID="tourkit-shield" />;
