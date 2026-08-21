@@ -15,6 +15,7 @@ export type TextStyle = { fontSize: number; fontWeight: FontWeight; color: strin
 
 export type Theme = {
   accent: string;
+  zIndex: number;
   scrim: { color: string; opacity: number };
   spotlight: { padding: number; radius: number | "auto" };
   card: {
@@ -31,6 +32,7 @@ export type Theme = {
 
 export type ThemeOverride = {
   accent?: string;
+  zIndex?: number;
   scrim?: Partial<Theme["scrim"]>;
   spotlight?: Partial<Theme["spotlight"]>;
   card?: Partial<Theme["card"]>;
@@ -45,6 +47,7 @@ export type ThemeOverride = {
 
 export const defaultTheme: Theme = {
   accent: "#1E9CFE",
+  zIndex: 10000,
   scrim: { color: "#0B121E", opacity: 0.86 },
   spotlight: { padding: 4, radius: "auto" },
   card: {
@@ -67,6 +70,7 @@ function apply(base: Theme, override: ThemeOverride | undefined): Theme {
   if (!override) return base;
   return {
     accent: override.accent ?? base.accent,
+    zIndex: override.zIndex ?? base.zIndex,
     scrim: { ...base.scrim, ...override.scrim },
     spotlight: { ...base.spotlight, ...override.spotlight },
     card: { ...base.card, ...override.card },
