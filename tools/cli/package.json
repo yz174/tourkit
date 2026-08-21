@@ -1,8 +1,11 @@
 {
   "name": "@tourkit/cli",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Scaffold tourkit into an existing app.",
   "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
   "type": "module",
   "bin": {
     "tourkit": "./dist/index.js"
@@ -26,6 +29,20 @@
     }
   },
   "devDependencies": {
-    "@tourkit/ai": "0.0.0"
-  }
+    "@tourkit/ai": "0.1.0"
+  },
+  "keywords": [
+    "cli",
+    "tour",
+    "onboarding",
+    "scaffold",
+    "recorder"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yz174/tourkit.git",
+    "directory": "tools/cli"
+  },
+  "homepage": "https://github.com/yz174/tourkit#readme",
+  "bugs": "https://github.com/yz174/tourkit/issues"
 }
