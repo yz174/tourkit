@@ -1,4 +1,5 @@
 export type {
+  Align,
   EventHandler,
   Fingerprint,
   GateArgs,
@@ -53,12 +54,14 @@ export {
 } from "./recorder/selector";
 export { TourRecorder, type TourRecorderProps } from "./recorder/TourRecorder";
 export { browserStorage, memoryStorage } from "./storage";
+export { TourHint, type TourHintProps } from "./TourHint";
 export { TourHost } from "./TourHost";
 export { TourProvider, type TourProviderProps } from "./TourProvider";
 export type {
   BackdropProps,
   CardPlacement,
   CardProps,
+  ClassNames,
   ProgressProps,
   Slots,
 } from "./types";

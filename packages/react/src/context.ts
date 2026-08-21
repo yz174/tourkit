@@ -1,6 +1,6 @@
-import type { TourEngine } from "@tourkit/core";
+import type { StorageAdapter, TourEngine } from "@tourkit/core";
 import { createContext, useContext } from "react";
-import type { Slots } from "./types";
+import type { ClassNames, Slots } from "./types";
 
 export type TourContextValue = {
   engine: TourEngine<unknown>;
@@ -8,6 +8,10 @@ export type TourContextValue = {
   registry: Map<string, Element>;
   container: Element | null;
   styled: boolean;
+  classNames: ClassNames;
+  storage: StorageAdapter;
+  openHint: string | null;
+  setOpenHint: (id: string | null) => void;
 };
 
 export const TourContext = createContext<TourContextValue | null>(null);

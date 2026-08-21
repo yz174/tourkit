@@ -8,6 +8,14 @@ export type CardPlacement = {
   arrow: { left: number; top: number } | null;
 };
 
+export type ClassNames = {
+  root?: string;
+  overlay?: string;
+  card?: string;
+  arrow?: string;
+  progress?: string;
+};
+
 export type CardProps<Ctx = unknown> = {
   step: TourStep<Ctx>;
   index: number;
@@ -16,8 +24,10 @@ export type CardProps<Ctx = unknown> = {
   placement: CardPlacement;
   theme: Theme;
   styled: boolean;
+  classNames: ClassNames;
   isFirst: boolean;
   isLast: boolean;
+  dismissible: boolean;
   next: () => void;
   prev: () => void;
   skip: () => void;
@@ -25,6 +35,7 @@ export type CardProps<Ctx = unknown> = {
 };
 
 export type BackdropProps = {
+  className?: string | undefined;
   clipPath: string;
   transition: string;
   theme: Theme;

@@ -10,10 +10,12 @@ import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { TourContext, type TourContextValue } from "./context";
 import { browserStorage } from "./storage";
 import { TourHost } from "./TourHost";
-import type { Slots } from "./types";
+import type { ClassNames, Slots } from "./types";
 import { CoachCard } from "./ui/CoachCard";
 import { Overlay } from "./ui/Overlay";
 import { ProgressDots } from "./ui/ProgressDots";
+
+const EMPTY_CLASSES: ClassNames = {};
 
 const DEFAULT_SLOTS: Slots = {
   Card: CoachCard,
@@ -31,6 +33,7 @@ export type TourProviderProps<Ctx> = {
   components?: Partial<Slots>;
   container?: Element | null;
   styled?: boolean;
+  classNames?: ClassNames;
   children: ReactNode;
 };
 
@@ -44,9 +47,12 @@ export function TourProvider<Ctx = unknown>({
   components,
   container = null,
   styled = true,
+  classNames = EMPTY_CLASSES,
   children,
 }: TourProviderProps<Ctx>) {
   const registry = useRef<Map<string, Element>>(new Map());
+  const [openHint, setOpenHint] = useState<string | null>(null);
+  const resolvedStorage = useMemo(() => storage ?? browserStorage(), [storage]);
   const [engine] = useState(
     () =>
       new TourEngine<Ctx>({
@@ -80,8 +86,12 @@ export function TourProvider<Ctx = unknown>({
       registry: registry.current,
       container,
       styled,
+      classNames,
+      storage: resolvedStorage,
+      openHint,
+      setOpenHint,
     }),
-    [engine, components, container, styled],
+    [engine, components, container, styled, classNames, resolvedStorage, openHint],
   );
 
   return (

@@ -543,3 +543,125 @@ describe("resume", () => {
     expect(await screen.findByText("First stop")).toBeInTheDocument();
   });
 });
+
+describe("ring", () => {
+  test("stays off unless the theme asks for it", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByText("start tour"));
+
+    await waitFor(() => {
+      expect(document.body.querySelector('[data-tourkit="root"]')).not.toBe(null);
+    });
+    expect(document.body.querySelector('[data-tourkit="ring"]')).toBe(null);
+  });
+
+  test("draws around the hole when the theme turns it on", async () => {
+    const user = userEvent.setup();
+    render(<App theme={{ ring: { show: true, color: "#FF0000", width: 3 } }} />);
+
+    await user.click(screen.getByText("start tour"));
+
+    const ring = await waitFor(() => {
+      const found = document.body.querySelector('[data-tourkit="ring"]') as HTMLElement | null;
+      if (!found) throw new Error("no ring");
+      return found;
+    });
+    expect(ring.style.left).toBe("93px");
+    expect(ring.style.width).toBe("134px");
+    expect(ring.style.borderColor).toBe("#FF0000");
+  });
+});
+
+describe("blur", () => {
+  test("the overlay carries no filter by default", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByText("start tour"));
+
+    const backdrop = await waitFor(() => {
+      const found = document.body.querySelector('[data-tourkit="backdrop"]') as HTMLElement | null;
+      if (!found) throw new Error("no backdrop");
+      return found;
+    });
+    expect(backdrop.style.backdropFilter).toBe("");
+  });
+
+  test("enabling blur filters the scrim and leaves the cutout alone", async () => {
+    const user = userEvent.setup();
+    render(<App theme={{ blur: { enabled: true, radius: 9 } }} />);
+
+    await user.click(screen.getByText("start tour"));
+
+    const backdrop = await waitFor(() => {
+      const found = document.body.querySelector('[data-tourkit="backdrop"]') as HTMLElement | null;
+      if (!found) throw new Error("no backdrop");
+      return found;
+    });
+    expect(backdrop.style.backdropFilter).toBe("blur(9px)");
+    expect(backdrop.style.clipPath).not.toBe("");
+  });
+});
+
+describe("dismissible", () => {
+  test("Escape ends a tour by default", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByText("start tour"));
+    await waitFor(() => {
+      expect(document.body.querySelector('[data-tourkit="root"]')).not.toBe(null);
+    });
+
+    await user.keyboard("{Escape}");
+
+    await waitFor(() => {
+      expect(document.body.querySelector('[data-tourkit="root"]')).toBe(null);
+    });
+  });
+
+  test("a tour marked not dismissible ignores Escape", async () => {
+    const locked: TourConfig<Ctx>[] = [{ ...tours[0], dismissible: false } as TourConfig<Ctx>];
+    const user = userEvent.setup();
+    render(<App tours={locked} />);
+
+    await user.click(screen.getByText("start tour"));
+    await waitFor(() => {
+      expect(document.body.querySelector('[data-tourkit="root"]')).not.toBe(null);
+    });
+
+    await user.keyboard("{Escape}");
+
+    expect(document.body.querySelector('[data-tourkit="root"]')).not.toBe(null);
+  });
+});
+
+describe("class hooks", () => {
+  test("stable classes ride alongside the data attributes", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByText("start tour"));
+
+    await waitFor(() => {
+      expect(document.body.querySelector(".tourkit-root")).not.toBe(null);
+    });
+    expect(document.body.querySelector(".tourkit-overlay")).not.toBe(null);
+    expect(document.body.querySelector(".tourkit-card")).not.toBe(null);
+  });
+
+  test("consumer classes are appended, not replacing ours", async () => {
+    const user = userEvent.setup();
+    render(<App classNames={{ root: "my-root", overlay: "my-overlay", card: "my-card" }} />);
+
+    await user.click(screen.getByText("start tour"));
+
+    await waitFor(() => {
+      expect(document.body.querySelector(".tourkit-root.my-root")).not.toBe(null);
+    });
+    expect(document.body.querySelector(".tourkit-overlay.my-overlay")).not.toBe(null);
+    expect(document.body.querySelector(".tourkit-card.my-card")).not.toBe(null);
+  });
+});

@@ -12,6 +12,7 @@ import {
 } from "./dom/resolve";
 import { useTour, useTourSnapshot } from "./hooks";
 import type { CardPlacement } from "./types";
+import { Ring } from "./ui/Ring";
 
 const CENTERED: CardPlacement = { left: 0, top: 0, side: "center", arrow: null };
 const EASING = "cubic-bezier(0.22, 1, 0.36, 1)";
@@ -22,7 +23,7 @@ function prefersReducedMotion(): boolean {
 }
 
 export function TourHost() {
-  const { components, registry, container, styled } = useTourContext();
+  const { components, registry, container, styled, classNames } = useTourContext();
   const engine = useEngine();
   const snapshot = useTourSnapshot();
   const { next, prev, skip, stop } = useTour();
@@ -40,7 +41,7 @@ export function TourHost() {
   const placedOnce = useRef(false);
   const warned = useRef(new Set<string>());
 
-  const { status, step, stepIndex, total, theme } = snapshot;
+  const { status, step, stepIndex, total, theme, dismissible } = snapshot;
   const running = status !== "idle";
   const active = status === "active";
   const target = step?.target ?? null;
@@ -119,7 +120,7 @@ export function TourHost() {
 
     const result = await computePosition(element, card, {
       strategy: "fixed",
-      placement: toFloatingPlacement(step?.placement ?? "auto"),
+      placement: toFloatingPlacement(step?.placement ?? "auto", step?.align ?? "center"),
       middleware,
     });
 
@@ -173,7 +174,7 @@ export function TourHost() {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
-        stop();
+        if (dismissible) stop();
         return;
       }
       if (event.key === "ArrowRight") {
@@ -197,7 +198,7 @@ export function TourHost() {
     };
     document.addEventListener("keydown", onKeyDown, true);
     return () => document.removeEventListener("keydown", onKeyDown, true);
-  }, [active, next, prev, stop]);
+  }, [active, next, prev, stop, dismissible]);
 
   const clipPath = useMemo(() => {
     const vw = viewport.width;
@@ -237,6 +238,12 @@ export function TourHost() {
         height: rect.height + holePadding * 2,
       }
     : null;
+  const holeRadius =
+    typeof step.radius === "number"
+      ? step.radius
+      : typeof theme.spotlight.radius === "number"
+        ? theme.spotlight.radius
+        : 8;
   const transition = animating ? `clip-path ${theme.motion.morph}ms ${EASING}` : "none";
   const cardTransition = animating
     ? `left ${theme.motion.travel}ms ${EASING}, top ${theme.motion.travel}ms ${EASING}`
@@ -244,6 +251,7 @@ export function TourHost() {
 
   const tree = (
     <div
+      className={["tourkit-root", classNames.root].filter(Boolean).join(" ")}
       data-tourkit="root"
       data-tourkit-state={active ? "active" : "resolving"}
       data-tourkit-interaction={interaction}
@@ -251,6 +259,7 @@ export function TourHost() {
     >
       {interaction === "passthrough" ? null : (
         <div
+          className="tourkit-shield"
           data-tourkit="shield"
           aria-hidden="true"
           style={{ position: "fixed", inset: 0, pointerEvents: "auto" }}
@@ -259,6 +268,7 @@ export function TourHost() {
       {interaction === "advance-on-press" && holeBox ? (
         <button
           type="button"
+          className="tourkit-hole-catcher"
           data-tourkit="hole-catcher"
           aria-label={step.title ? `Continue: ${step.title}` : "Continue the tour"}
           onClick={next}
@@ -276,9 +286,19 @@ export function TourHost() {
           }}
         />
       ) : null}
-      <Backdrop clipPath={clipPath} transition={transition} theme={theme} styled={styled} />
+      <Backdrop
+        clipPath={clipPath}
+        transition={transition}
+        theme={theme}
+        styled={styled}
+        className={classNames.overlay}
+      />
+      {theme.ring.show && holeBox && !reduceMotion ? (
+        <Ring hole={holeBox} radius={holeRadius} theme={theme} />
+      ) : null}
       <div
         ref={cardRef}
+        className="tourkit-card-wrap"
         data-tourkit="card-wrap"
         data-tourkit-placement={placement.side}
         role="dialog"
@@ -316,8 +336,10 @@ export function TourHost() {
           placement={placement}
           theme={theme}
           styled={styled}
+          classNames={classNames}
           isFirst={stepIndex === 0}
           isLast={stepIndex === total - 1}
+          dismissible={dismissible}
           next={next}
           prev={prev}
           skip={skip}
