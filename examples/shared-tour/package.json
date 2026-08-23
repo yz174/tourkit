@@ -1,6 +1,6 @@
 {
   "name": "@tourkit/example-shared-tour",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "main": "./src/index.ts",
@@ -12,6 +12,6 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@tourkit/core": "0.1.0"
+    "@tourkit/core": "0.2.0"
   }
 }

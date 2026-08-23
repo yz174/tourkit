@@ -1,6 +1,6 @@
 {
   "name": "@tourkit/ai",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Generate a tourkit tour from a user's question.",
   "license": "MIT",
   "engines": {
@@ -32,7 +32,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@tourkit/core": "0.1.0",
+    "@tourkit/core": "0.2.0",
     "zod": "^4.4.3"
   },
   "peerDependencies": {
