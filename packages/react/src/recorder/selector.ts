@@ -73,8 +73,35 @@ export function textOf(element: Element): string | undefined {
   return text.slice(0, 120);
 }
 
-export function describeElement(element: Element, route = ""): RecordedStep {
-  const tourId = element.getAttribute("data-tour-id");
+/**
+ * The id an element was registered under with useTourTarget, if any. The innermost registered
+ * ancestor wins, so a registered row inside a registered list records as the row rather than
+ * as whichever of the two was registered first.
+ */
+function registeredId(element: Element, registry?: Map<string, Element>): string | null {
+  if (!registry) return null;
+
+  let bestId: string | null = null;
+  let bestNode: Element | null = null;
+
+  for (const [id, node] of registry) {
+    if (node === element) return id;
+    if (!node.contains(element)) continue;
+    if (bestNode === null || bestNode.contains(node)) {
+      bestId = id;
+      bestNode = node;
+    }
+  }
+
+  return bestId;
+}
+
+export function describeElement(
+  element: Element,
+  route = "",
+  registry?: Map<string, Element>,
+): RecordedStep {
+  const tourId = element.getAttribute("data-tour-id") ?? registeredId(element, registry);
   const label = element.getAttribute("data-tour-label") ?? element.getAttribute("aria-label");
   const role = element.getAttribute("role") ?? undefined;
   const text = textOf(element);

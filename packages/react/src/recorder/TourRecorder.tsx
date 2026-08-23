@@ -1,10 +1,18 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { TourContext } from "../context";
 import { describeElement, type RecordedStep, type Recording } from "./selector";
+import { DEFAULT_ENDPOINT, useRecordServer } from "./server";
 
 export type TourRecorderProps = {
   name?: string;
   endpoint?: string;
+  /**
+   * Hide the panel until `tourkit record` answers its handshake. Mount the recorder once in
+   * development and it appears when the CLI starts, and disappears when you stop it.
+   * Set false to render it unconditionally, for the clipboard flow with no server.
+   */
+  autoShow?: boolean;
   onFinish?: (recording: Recording) => void;
 };
 
@@ -16,13 +24,18 @@ function currentRoute(): string {
 
 export function TourRecorder({
   name = "recorded",
-  endpoint = "http://127.0.0.1:5178/record",
+  endpoint = DEFAULT_ENDPOINT,
+  autoShow = true,
   onFinish,
 }: TourRecorderProps) {
   const [recording, setRecording] = useState(false);
   const [captured, setCaptured] = useState<{ key: string; step: RecordedStep }[]>([]);
   const [sent, setSent] = useState<"idle" | "sending" | "sent" | "failed">("idle");
   const [mounted, setMounted] = useState(false);
+  // Optional on purpose: the recorder still works outside a provider, it just cannot
+  // resolve ids registered through useTourTarget.
+  const context = useContext(TourContext);
+  const server = useRecordServer(endpoint, mounted && autoShow);
 
   useEffect(() => setMounted(true), []);
 
@@ -36,12 +49,15 @@ export function TourRecorder({
       event.stopPropagation();
       setCaptured((current) => [
         ...current,
-        { key: `${Date.now()}-${current.length}`, step: describeElement(element, currentRoute()) },
+        {
+          key: `${Date.now()}-${current.length}`,
+          step: describeElement(element, currentRoute(), context?.registry),
+        },
       ]);
     };
     document.addEventListener("click", onClick, true);
     return () => document.removeEventListener("click", onClick, true);
-  }, [recording]);
+  }, [recording, context]);
 
   const steps = captured.map((entry) => entry.step);
 
@@ -81,6 +97,7 @@ export function TourRecorder({
   }, [build]);
 
   if (!mounted) return null;
+  if (autoShow && !server.online) return null;
 
   const panel = (
     <div
@@ -107,6 +124,9 @@ export function TourRecorder({
         data-tourkit-recorder-count
       >{`${steps.length} step${steps.length === 1 ? "" : "s"}`}</span>
       <span data-tourkit-recorder-status>{sent}</span>
+      {server.outDir ? (
+        <span data-tourkit-recorder-outdir style={{ opacity: 0.7 }}>{`→ ${server.outDir}`}</span>
+      ) : null}
       <div style={{ display: "flex", gap: 6 }}>
         <button
           type="button"
