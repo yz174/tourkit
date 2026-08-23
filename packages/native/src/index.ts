@@ -26,6 +26,19 @@ export {
   useTourSnapshot,
   useTourState,
 } from "./hooks";
+export {
+  defaultRecordEndpoint,
+  hostFromScriptUrl,
+  RECORD_PORT,
+  statusUrl,
+} from "./recorder/endpoint";
+export { type Candidate, pickTarget } from "./recorder/hitTest";
+export {
+  type RecordedStep,
+  type Recording,
+  TourRecorder,
+  type TourRecorderProps,
+} from "./recorder/TourRecorder";
 export { type AsyncStorageLike, createMemoryStorage, createStorageAdapter } from "./storage";
 export { TourHost } from "./TourHost";
 export { TourProvider, type TourProviderProps } from "./TourProvider";
