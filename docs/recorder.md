@@ -3,14 +3,21 @@
 Writing a tour by hand means typing selectors and copy for every step. The recorder does the
 tedious half: you click through your app in the order a new user would, and it writes the file.
 
+On the web nothing is prepared first. Install the two packages below, mount the recorder once,
+and from then on any element you click is recorded and resolves again when the tour runs: no
+attributes, no wrappers, no edits to your markup. On React Native it works the other way round,
+and [that section](#react-native) says why.
+
 The output is a normal tour file. You edit the wording and commit it.
 
 ## How it works
 
 ```
-npx tourkit record          # starts a local server on 127.0.0.1:5178
+tourkit record                        # @tourkit/cli, in your terminal
+   starts a local server on 127.0.0.1:5178
         ↓
-<TourRecorder /> in your app, in development only
+<TourRecorder />                      # @tourkit/react, inside your app
+   asks whether it is running, and shows itself
         ↓
 press Record, click through your app, press Save
         ↓
@@ -19,18 +26,52 @@ src/tour/your-tour.tour.ts
 
 Nothing is uploaded anywhere. The server runs on your machine and writes a file into your repo.
 
-## Set it up
+## Two packages, one flow
+
+Recording needs both halves, and neither works alone.
+
+| Package | Where it runs | What it does |
+| --- | --- | --- |
+| `@tourkit/react` or `@tourkit/native` | inside your app | `<TourRecorder />`, the panel that captures clicks and posts the recording |
+| `@tourkit/cli` | your terminal | the local server that answers the handshake and writes the tour file |
 
 ```bash
-npx tourkit record src/tour
+npm i @tourkit/react      # or @tourkit/native
+npm i -D @tourkit/cli     # build-time only, nothing imports it at runtime
 ```
 
-Then render the recorder somewhere in development:
+The CLI ships a single binary and no runtime code. It never renders anything, never injects
+anything into your app, and cannot record on its own: installing it alone gets you a server
+with nothing on the other end.
+
+## Set it up
+
+`tourkit init` mounts the recorder for you, inside the `provider.tsx` it writes. If you are wiring
+it by hand, render it once in development, anywhere inside `TourProvider`:
 
 ```tsx
 import { TourRecorder } from "@tourkit/react";
 
 {process.env.NODE_ENV === "development" ? <TourRecorder name="Driver onboarding" /> : null}
+```
+
+Leave it mounted. The panel polls `GET /status` and renders only while the CLI is answering, so
+it appears when you run `tourkit record` and disappears when you stop it. Pass `autoShow={false}`
+to render it unconditionally, which is what you want for the clipboard flow with no server.
+
+Then, in a second terminal, next to your dev server:
+
+```bash
+tourkit record src/tour
+```
+
+The terminal says what it is waiting for, and names your app when it connects:
+
+```
+tourkit: listening on http://127.0.0.1:5178
+tourkit: tours will be written to src/tour
+tourkit: waiting for your app. Run it in development with <TourRecorder /> mounted.
+tourkit: app connected (http://localhost:3000). Press Record in the panel.
 ```
 
 The panel sits bottom-right. Press **Record**, click the elements you want the tour to visit,
@@ -44,8 +85,93 @@ click handlers do not fire, so you can safely click a Delete button without dele
 | Save | Posts the recording to `tourkit record` |
 | Copy | Copies the recording JSON to the clipboard, for when the server is not running |
 
-If you cannot run the CLI, use **Copy** and paste the JSON wherever you like. `onFinish` also
-receives the recording, so you can handle it yourself.
+If you cannot run the CLI, use **Copy** with `autoShow={false}` and paste the JSON wherever you
+like. `onFinish` also receives the recording, so you can handle it yourself.
+
+## What it can reach on the web
+
+Anything in the DOM, once the two packages are in place, with nothing prepared in advance. You do not add attributes before recording,
+you do not wrap elements, and you do not touch your markup at all. Click a heading, a paragraph,
+a table cell, an icon inside an SVG: each one is recorded as a target and resolves again when the
+tour runs, in a production build with hashed class names and minified output.
+
+The order a target is written in is the only thing that changes: an element carrying a
+`data-tour-id` is recorded under that id, and everything else gets a generated CSS selector plus
+a fingerprint to heal it. Both run. The id is the one that survives a refactor, which is why the
+CLI names the selector steps when it writes the file.
+
+Three things resolve to something other than what you clicked:
+
+| You click | The recorder writes |
+| --- | --- |
+| inside a shadow root | the host element, because the DOM retargets the event at the boundary |
+| something painted on a `<canvas>` | the `<canvas>` itself, since the drawing has no node |
+| inside an SVG | that exact node, `circle`, `path` and all |
+
+None of those are fixable from a click listener, and none of them prevent a step: a spotlight on
+the web component or the canvas is usually the step you wanted anyway.
+
+## Running it, whatever your package manager is
+
+`npx tourkit` only works when npm wrote the shim it looks for. Bun on Windows writes `tourkit.exe`
+and `tourkit.bunx` instead, and npx then tries to fetch a package called `tourkit` from the
+registry and fails with a 404. Use the runner that matches your install:
+
+```bash
+bunx tourkit record src/tour        # bun
+npx @tourkit/cli record src/tour    # npm, scoped name always resolves
+pnpm exec tourkit record src/tour   # pnpm
+```
+
+A `"record": "tourkit record src/tour"` script in `package.json` sidesteps the question.
+
+## React Native
+
+Same CLI, same file format. The pairing is the same too — `@tourkit/native` for the panel,
+`@tourkit/cli` for the server — with the import changing:
+
+```tsx
+import { TourRecorder } from "@tourkit/native";
+
+{__DEV__ ? <TourRecorder name="Driver onboarding" /> : null}
+```
+
+Two things differ, both because there is no DOM.
+
+**It records `TourTarget`s only, so it cannot discover anything for you.** A tap is hit-tested
+against every mounted `TourTarget`, and the smallest box containing the point wins, so a target
+nested inside another records as the inner one. A tap on anything else records nothing and the
+panel says so.
+
+That is a real limit, not a rough edge, and it is worth knowing before you reach for the recorder
+on native. Web tours resolve a CSS selector against a live document, so a recording can point at
+an element nobody prepared. React Native has no queryable view tree in a production build — the
+whole Fabric surface available to JavaScript is `dispatchCommand`, `findNodeAtPoint`, `measure`,
+`sendAccessibilityEvent` and `setIsJSResponder` — so a tour can only find a view that registered
+itself through a ref. That registration is what `TourTarget` does, and nothing can replace it.
+
+The consequence: you must wrap an element before you can record it, which means you already know
+which elements the tour visits. On native the recorder saves you the ordering and the labels, not
+the discovery. Writing the steps by hand is often the shorter path, since the ids are yours
+already:
+
+```ts
+{ id: "post", target: "post-ride", title: "Post a ride" }
+```
+
+Reach for it when a flow crosses several screens and you want the order and routes captured
+without switching back to the editor.
+
+**It finds your machine through Metro.** The endpoint host is read from Metro's script URL, which
+is by definition the machine running the CLI. A simulator therefore needs nothing, and a physical
+device needs the server bound to more than loopback:
+
+```bash
+tourkit record src/tour --host
+```
+
+That binds `0.0.0.0` and prints the LAN address your phone can reach. Pass `endpoint` on the
+component to override the whole thing.
 
 ## What gets written
 
@@ -101,6 +227,117 @@ The selector generator prefers, in order: a unique `data-testid`, a unique `id`,
 from tag names, `nth-of-type` and semantic class names. It deliberately ignores hashed CSS-module
 classes and numeric utility classes, since neither survives a refactor.
 
+## From a recording to a shipped tour
+
+The generated file is a draft. It resolves and it runs, but two things in it are wrong for
+production: any target that fell back to a selector, and every title, which is scraped text rather
+than copy. Five steps, once per tour:
+
+**1. Move it out of the recorder's directory.** Recording the same tour name again overwrites that
+path, so a file you have started editing does not belong there.
+
+```bash
+mv src/tour/site-tour.tour.ts lib/tours/site-tour.ts
+```
+
+**2. Give the selector steps a `data-tour-id`.** The CLI already named them for you.
+
+```tsx
+<div className="body" data-tour-id="why-one-file">
+```
+
+**3. Point the steps at those ids, and delete the fingerprint that came with them.** A fingerprint
+insures a selector. An id you control cannot drift, so there is nothing left to insure.
+
+```ts
+{ id: "why", target: "why-one-file", title: "Web and native, one file" }
+```
+
+**4. Write the copy.** `title` is the line a user reads, and the recorder can only guess it from
+the element's text. Add a `body` where a step earns a second line, and drop the ones that do not.
+
+**5. Register it and start it.**
+
+```tsx
+import { siteTour } from "@/lib/tours/site-tour";
+
+<TourProvider tours={[siteTour]} context={context}>
+```
+
+```tsx
+const { start } = useTour();
+
+<button type="button" onClick={() => start("site-tour")}>
+  Show me around
+</button>
+```
+
+Only on a first visit, if that is the shape you want:
+
+```tsx
+import { readRecord } from "@tourkit/core";
+
+const record = await readRecord(storage, siteTour);
+if (record?.outcome !== "completed") start("site-tour");
+```
+
+From then on it is an ordinary source file. Bump its `version` whenever you change the steps, so a
+saved position from the old shape is discarded rather than resumed onto the wrong step.
+
+## After it ships
+
+**The recorder does not reach production, as long as you gate it.** The dev check is what does
+the work: bundlers fold the branch away and then drop the component, because every package sets
+`sideEffects: false`. Verified by building this site and grepping the client chunks — the string
+`tourkit recorder` appears once when the component is mounted unconditionally, and not at all
+behind the gate.
+
+```tsx
+{process.env.NODE_ENV === "development" ? <TourRecorder /> : null}   // web
+{__DEV__ ? <TourRecorder /> : null}                                  // react native
+```
+
+Mounting it ungated ships a dev tool to your users. It stays invisible, since nothing answers its
+handshake in production, but it is in the bundle.
+
+**`@tourkit/cli` belongs in `devDependencies`.** It is a build-time tool that writes files into
+your repo. Nothing imports it at runtime.
+
+```bash
+npm i -D @tourkit/cli
+```
+
+**Adding a step later.** Recording the same tour name overwrites the file, wording and all, so
+record the new pass under a different name and copy the step across:
+
+```bash
+tourkit record lib/tours     # name it "site tour v2" in the panel
+```
+
+Then bump `version` on the tour you edited. A saved position from the old shape is discarded
+rather than resumed onto a step that has moved.
+
+**Keep the targets honest.** A step whose target disappears is skipped after `gateTimeoutMs` and
+emits `target:timeout`, which is a silent hole in a tour nobody is watching. Fail your CI on it:
+
+```tsx
+<TourProvider
+  tours={tours}
+  onEvent={(name, event) => {
+    if (name === "target:timeout") throw new Error(`tourkit: no target for step ${event.stepId}`);
+  }}
+>
+```
+
+A browser test that walks the tour end to end then breaks the build when someone deletes an
+element the tour points at. Watch for the healing warning in the console too: a step matched by
+fingerprint is a step whose target is already wrong.
+
+**What to look at once real users see it.** Every event carries `{ tourId, stepId, stepIndex,
+total }`. `step:skip` clustering on one step means that step is broken or unwanted, and the gap
+between `tour:start` and `tour:complete` is the only completion rate worth quoting. See
+[Provider reference](./provider.md) for the full list.
+
 ## Drafting the copy
 
 ```bash
@@ -116,11 +353,6 @@ from.
 
 Drafted copy is a starting point. Read it before you ship it; a model looking at `<button>Go</button>`
 does not know what your product calls that action.
-
-## React Native
-
-The overlay is web-only for now. The CLI half is not: the record server accepts a recording from
-anywhere, so a native recorder posting the same JSON shape writes the same file.
 
 ## Why there is no browser extension
 

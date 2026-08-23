@@ -63,7 +63,7 @@ describe("scaffoldFiles", () => {
   test("writes a tours file and a provider into the chosen directory", () => {
     const files = scaffoldFiles("next", "src/tour");
 
-    expect(files.map((file) => file.path)).toEqual(["src/tour/tours.ts", "src/tour/Tours.tsx"]);
+    expect(files.map((file) => file.path)).toEqual(["src/tour/tours.ts", "src/tour/provider.tsx"]);
   });
 
   test("the web provider imports the web package and marks itself a client component", () => {
@@ -108,5 +108,28 @@ describe("nextSteps", () => {
     for (const kind of ["next", "react", "expo", "react-native"] as const) {
       expect(nextSteps(kind, "src/tour").join(" ")).toContain('start("onboarding")');
     }
+  });
+});
+
+describe("the scaffolded files", () => {
+  test("no two of them differ only in casing", () => {
+    const names = scaffoldFiles("next", "src/tour").map((file) => file.path.toLowerCase());
+    expect(new Set(names).size).toBe(names.length);
+  });
+
+  test("the provider compiles under the classic JSX transform too", () => {
+    for (const kind of ["next", "expo"] as const) {
+      const provider = scaffoldFiles(kind, "src/tour").find((f) => f.path.endsWith("provider.tsx"));
+      expect(provider?.contents).toContain('import React, { type ReactNode } from "react"');
+    }
+  });
+
+  test("the recorder is mounted, and gated so it cannot reach production", () => {
+    const web = scaffoldFiles("next", "src/tour").find((f) => f.path.endsWith("provider.tsx"));
+    expect(web?.contents).toContain("<TourRecorder />");
+    expect(web?.contents).toContain('process.env.NODE_ENV === "development"');
+
+    const native = scaffoldFiles("expo", "src/tour").find((f) => f.path.endsWith("provider.tsx"));
+    expect(native?.contents).toContain("__DEV__ ? <TourRecorder /> : null");
   });
 });

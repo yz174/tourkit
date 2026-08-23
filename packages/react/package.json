@@ -1,6 +1,6 @@
 {
   "name": "@tourkit/react",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "DOM renderer for tourkit app tours.",
   "license": "MIT",
   "engines": {
@@ -38,7 +38,7 @@
   },
   "dependencies": {
     "@floating-ui/dom": "^1.8.0",
-    "@tourkit/core": "0.1.0"
+    "@tourkit/core": "0.2.0"
   },
   "peerDependencies": {
     "react": ">=18.0.0",
@@ -56,8 +56,8 @@
     "@types/react-dom": "^19.2.4",
     "happy-dom": "^20.11.6",
     "vitest": "^4.1.11",
-    "@tourkit/example-shared-tour": "0.1.0",
-    "@tourkit/ai": "0.1.0"
+    "@tourkit/example-shared-tour": "0.2.0",
+    "@tourkit/ai": "0.2.0"
   },
   "keywords": [
     "react",

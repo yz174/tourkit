@@ -25,27 +25,33 @@ export const tours = [onboarding];
 
 const WEB_PROVIDER = `"use client";
 
-import { TourProvider } from "@tourkit/react";
-import type { ReactNode } from "react";
+import { TourProvider, TourRecorder } from "@tourkit/react";
+import React, { type ReactNode } from "react";
 import { type AppContext, tours } from "./tours";
+
+const dev = process.env.NODE_ENV === "development";
 
 export function Tours({ children }: { children: ReactNode }) {
   return (
     <TourProvider<AppContext> tours={tours} context={{ plan: "free" }}>
       {children}
+      {/* Shows itself only while \`tourkit record\` is running. */}
+      {dev ? <TourRecorder /> : null}
     </TourProvider>
   );
 }
 `;
 
-const NATIVE_PROVIDER = `import { TourProvider } from "@tourkit/native";
-import type { ReactNode } from "react";
+const NATIVE_PROVIDER = `import { TourProvider, TourRecorder } from "@tourkit/native";
+import React, { type ReactNode } from "react";
 import { type AppContext, tours } from "./tours";
 
 export function Tours({ children }: { children: ReactNode }) {
   return (
     <TourProvider<AppContext> tours={tours} context={{ plan: "free" }}>
       {children}
+      {/* Shows itself only while \`tourkit record\` is running. */}
+      {__DEV__ ? <TourRecorder /> : null}
     </TourProvider>
   );
 }
@@ -55,14 +61,16 @@ export function scaffoldFiles(kind: ProjectKind, dir: string): ScaffoldFile[] {
   return [
     { path: `${dir}/tours.ts`, contents: TOUR },
     {
-      path: `${dir}/Tours.tsx`,
+      // Not Tours.tsx: a case-insensitive filesystem cannot tell it apart from tours.ts, and
+      // TypeScript then resolves an import of one to the other.
+      path: `${dir}/provider.tsx`,
       contents: isNative(kind) ? NATIVE_PROVIDER : WEB_PROVIDER,
     },
   ];
 }
 
-export function nextSteps(kind: ProjectKind, dir: string): string[] {
-  const steps = [`Wrap your app in <Tours> from ${dir}/Tours.tsx.`];
+export function nextSteps(kind: ProjectKind, dir: string, wired = false): string[] {
+  const steps = wired ? [] : [`Wrap your app in <Tours> from ${dir}/provider.tsx.`];
   if (isNative(kind)) {
     steps.push(
       `Wrap one element in <TourTarget id="tourkit-first-target">.`,
@@ -72,6 +80,11 @@ export function nextSteps(kind: ProjectKind, dir: string): string[] {
   } else {
     steps.push(`Add data-tour-id="tourkit-first-target" to one element.`);
   }
-  steps.push(`Call start("onboarding") from useTour() somewhere.`);
+  steps.push(
+    `Call start("onboarding") from useTour() somewhere.`,
+    isNative(kind)
+      ? `Run  tourkit record ${dir} --host  and the recorder panel appears in your app.`
+      : `Run  tourkit record ${dir}  and the recorder panel appears in your app.`,
+  );
   return steps;
 }

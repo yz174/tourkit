@@ -20,7 +20,7 @@ Docs live in [`docs/`](./docs/README.md).
 | `@tourkit/react` | DOM renderer, plus the recorder overlay. Verified in Chromium. |
 | `@tourkit/native` | React Native renderer. Built, not yet device-verified. |
 | `@tourkit/ai` | Optional. Turns a question into a tour, and drafts recorded tour copy. No live model call verified yet. |
-| `@tourkit/cli` | `tourkit init` scaffolds a tour; `tourkit record` writes one from clicks. |
+| `@tourkit/cli` | Dev tool. `tourkit init` scaffolds a tour; `tourkit record` writes one from clicks, paired with the `TourRecorder` from the renderer package. |
 
 ## Development
 

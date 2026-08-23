@@ -30,7 +30,14 @@ function Playground() {
           ))}
         </ul>
       </section>
-      <TourRecorder name="Playground walkthrough" />
+      {/*
+        The panel renders unconditionally by default here, because most of these tests run with
+        no record server. ?autoshow=1 exercises the real handshake against the real CLI.
+      */}
+      <TourRecorder
+        name="Playground walkthrough"
+        autoShow={new URLSearchParams(window.location.search).has("autoshow")}
+      />
     </main>
   );
 }

@@ -134,7 +134,7 @@ describe("TourRecorder", () => {
         <button type="button" id="inbox">
           Inbox
         </button>
-        <TourRecorder name="Driver onboarding" />
+        <TourRecorder name="Driver onboarding" autoShow={false} />
       </div>
     );
   }
@@ -190,7 +190,7 @@ describe("TourRecorder", () => {
         <button type="button" onClick={() => (pressed += 1)}>
           Danger
         </button>
-        <TourRecorder />
+        <TourRecorder autoShow={false} />
       </div>,
     );
 
@@ -257,7 +257,7 @@ describe("TourRecorder", () => {
         <button type="button" data-tour-id="post-ride">
           Post
         </button>
-        <TourRecorder onFinish={(recording) => seen.push(recording)} />
+        <TourRecorder autoShow={false} onFinish={(recording) => seen.push(recording)} />
       </div>,
     );
 
@@ -267,5 +267,118 @@ describe("TourRecorder", () => {
 
     expect(seen).toHaveLength(1);
     expect(seen[0]?.steps.map((step) => step.target)).toEqual(["post-ride"]);
+  });
+});
+
+describe("the handshake", () => {
+  function stubStatus(answer: () => Response) {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) => {
+        if (String(url).endsWith("/status")) return answer();
+        return new Response("{}", { status: 200 });
+      }),
+    );
+  }
+
+  test("stays hidden while nothing is listening", async () => {
+    stubStatus(() => {
+      throw new Error("connection refused");
+    });
+    render(<TourRecorder />);
+
+    await waitFor(() => {
+      expect(document.querySelector("[data-tourkit-recorder]")).toBeNull();
+    });
+  });
+
+  test("appears once the CLI answers, and says where it writes", async () => {
+    stubStatus(() => Response.json({ ok: true, outDir: "lib/tours" }));
+    render(<TourRecorder />);
+
+    await waitFor(() => {
+      expect(document.querySelector("[data-tourkit-recorder]")).not.toBeNull();
+    });
+    expect(document.querySelector("[data-tourkit-recorder-outdir]")?.textContent).toBe(
+      "→ lib/tours",
+    );
+  });
+
+  test("a server that answers without ok is not a server", async () => {
+    stubStatus(() => Response.json({ ok: false }));
+    render(<TourRecorder />);
+
+    await waitFor(() => {
+      expect(document.querySelector("[data-tourkit-recorder]")).toBeNull();
+    });
+  });
+
+  test("autoShow false renders the panel with no server at all", () => {
+    stubStatus(() => {
+      throw new Error("connection refused");
+    });
+    render(<TourRecorder autoShow={false} />);
+
+    expect(document.querySelector("[data-tourkit-recorder]")).not.toBeNull();
+  });
+});
+
+describe("describeElement against the provider registry", () => {
+  test("an element registered with useTourTarget records as that id, not a selector", () => {
+    document.body.innerHTML = "<main><section><button>Save</button></section></main>";
+    const button = document.querySelector("button") as Element;
+    const registry = new Map<string, Element>([["save-ride", button]]);
+
+    const step = describeElement(button, "/", registry);
+
+    expect(step.target).toBe("save-ride");
+    expect(step.registered).toBe(true);
+  });
+
+  test("a child of a registered element records as its ancestor's id", () => {
+    document.body.innerHTML = "<div><span>Save</span></div>";
+    const wrapper = document.querySelector("div") as Element;
+    const registry = new Map<string, Element>([["save-ride", wrapper]]);
+
+    expect(describeElement(document.querySelector("span") as Element, "", registry).target).toBe(
+      "save-ride",
+    );
+  });
+
+  test("data-tour-id still wins over the registry", () => {
+    document.body.innerHTML = '<button data-tour-id="attribute-wins">Save</button>';
+    const button = document.querySelector("button") as Element;
+    const registry = new Map<string, Element>([["registry-loses", button]]);
+
+    expect(describeElement(button, "", registry).target).toBe("attribute-wins");
+  });
+
+  test("without a registry nothing changes", () => {
+    document.body.innerHTML = "<main><section><button>Save</button></section></main>";
+    const step = describeElement(document.querySelector("button") as Element);
+
+    expect(step.registered).toBe(false);
+    expect(step.target).toContain("button");
+  });
+});
+
+describe("nested registered targets", () => {
+  test("the innermost registered ancestor wins, whatever order they registered in", () => {
+    document.body.innerHTML = '<ul id="list"><li id="row"><span>Save</span></li></ul>';
+    const list = document.querySelector("#list") as Element;
+    const row = document.querySelector("#row") as Element;
+    const target = document.querySelector("span") as Element;
+
+    const outerFirst = new Map<string, Element>([
+      ["ride-list", list],
+      ["ride-row", row],
+    ]);
+    const innerFirst = new Map<string, Element>([
+      ["ride-row", row],
+      ["ride-list", list],
+    ]);
+
+    expect(describeElement(target, "", outerFirst).target).toBe("ride-row");
+    expect(describeElement(target, "", innerFirst).target).toBe("ride-row");
   });
 });

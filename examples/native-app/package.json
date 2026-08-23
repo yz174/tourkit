@@ -1,6 +1,6 @@
 {
   "name": "@tourkit/example-native-app",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "main": "./src/App.tsx",
@@ -8,9 +8,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@tourkit/core": "0.1.0",
-    "@tourkit/native": "0.1.0",
-    "@tourkit/example-shared-tour": "0.1.0"
+    "@tourkit/core": "0.2.0",
+    "@tourkit/native": "0.2.0",
+    "@tourkit/example-shared-tour": "0.2.0"
   },
   "devDependencies": {
     "@types/react": "19.2.18",

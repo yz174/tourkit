@@ -1,6 +1,6 @@
 {
   "name": "@tourkit/native",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "React Native spotlight renderer for tourkit.",
   "license": "MIT",
   "engines": {
@@ -29,7 +29,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@tourkit/core": "0.1.0"
+    "@tourkit/core": "0.2.0"
   },
   "peerDependencies": {
     "react": ">=18.0.0",

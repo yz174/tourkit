@@ -159,3 +159,10 @@ the hole from animating to jumping.
 - `placement: "left"` and `"right"`. They fall back to `auto`, because a 320px card does not fit
   beside anything on a 390px screen.
 - Multiple holes in one step.
+
+## Recording
+
+`tourkit record` works here, with one limit that shapes how you use it: the native recorder can
+only capture taps on mounted `TourTarget`s, because a production build has no queryable view tree
+to resolve anything else against. You wrap first, then record. See
+[Recording a tour](./recorder.md#react-native).

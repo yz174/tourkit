@@ -1,6 +1,6 @@
 {
   "name": "@tourkit/cli",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Scaffold tourkit into an existing app.",
   "license": "MIT",
   "engines": {
@@ -29,7 +29,7 @@
     }
   },
   "devDependencies": {
-    "@tourkit/ai": "0.1.0"
+    "@tourkit/ai": "0.2.0"
   },
   "keywords": [
     "cli",
