@@ -20,6 +20,14 @@ npm i @tourkit/native
 `@tourkit/core` comes along with either one. You never install it directly unless you are
 building your own renderer.
 
+The CLI is a separate, dev-only install, and it works alongside a renderer rather than replacing
+one: it writes tour files and runs the record server, while the `TourRecorder` component that
+captures your clicks ships in `@tourkit/react` and `@tourkit/native`.
+
+```bash
+npm i -D @tourkit/cli
+```
+
 React Native also needs `react-native-svg` and `react-native-reanimated`, which most apps already
 have. They are peer dependencies, so they use whatever version you already run.
 
