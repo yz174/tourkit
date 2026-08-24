@@ -1,6 +1,8 @@
 # Customization
 
-Three levels. Most apps stop at the first. The third exists so nobody has to fork the package.
+A tourkit overlay can be customized at three levels: theme tokens, component slots, and
+fully headless rendering. Most apps stop at the first. The third exists so nobody has to
+fork the package.
 
 ## Level 1: theme tokens
 
@@ -118,8 +120,12 @@ Defaults to 10000, which puts the tour above modals, sticky headers and toasts. 
 want the tour to sit *under* a fixed header. Without a z-index the scrim renders behind anything
 positioned above 0, and that element stays clickable during the tour.
 
-`easing` accepts `easeOutQuint`, `easeOut` or `linear`. Set any `motion` duration to 0 to turn
-that animation off. Reduced-motion is honoured automatically on both platforms.
+Set any `motion` duration to 0 to turn that animation off. Reduced motion is honoured
+automatically on both platforms.
+
+`easing` accepts `easeOutQuint`, `easeOut` or `linear`, and applies on React Native only. The web
+host animates on a fixed curve identical to `easeOutQuint`. Every token, with its type, its
+default and the four that differ per platform, is in the [Theme reference](./theme.md).
 
 ## Level 2: component slots
 

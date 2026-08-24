@@ -1,5 +1,10 @@
 # Ask and be shown
 
+`@tourkit/ai` turns a user's question into a live walkthrough of your real interface
+instead of a support article. It sends the question plus the ids of the on-screen targets
+to a model in one call, gets back an ordered list of ids, and hands that to the normal
+tourkit engine as a `TourConfig`.
+
 A user types a question into your help box. Instead of a support article, your actual interface
 walks them through the answer.
 

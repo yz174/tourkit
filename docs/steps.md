@@ -35,7 +35,7 @@ anything from a renderer, which is what lets one file drive both platforms.
 | `interaction` | `"block" \| "passthrough" \| "advance-on-press"` | `"block"` | See [Interaction](./interaction.md). |
 | `scroll` | `boolean \| { block?, behavior? }` | `true` | Bring an off-screen target into view. `false` leaves the scroll position alone. |
 | `padding` | `number?` | theme | Space between the target and the edge of the hole. |
-| `radius` | `number \| "auto"` | theme | Corner radius of the hole. `"auto"` uses the radius the target registered. |
+| `radius` | `number \| "auto"` | theme | Corner radius of the hole. On React Native, `"auto"` reads the radius the `TourTarget` registered. On web there is no registered radius, so it resolves to 8. See the [Theme reference](./theme.md#spotlight). |
 | `theme` | `ThemeOverride?` | | Applied to this step only. Highest precedence. |
 
 ## Gates
