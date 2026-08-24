@@ -2,15 +2,16 @@
 
 One app tour, running on web and React Native from the same steps file.
 
-Status: pre-alpha, feature complete against the plan. One steps file drives a browser tour end to
-end in Chromium and typechecks against the React Native app.
+Status: alpha. All five `@tourkit` packages are published on npm at 0.2.0. One steps file
+drives a browser tour end to end in Chromium and typechecks against the React Native app.
 
-Not done, and none of it is implementation: nothing is published (the `@tourkit` npm scope does
-not exist yet), the React Native renderer has never run on a device, no live model call has been
-made, the docs exist as markdown without a site, and only Chromium has been tested. `FINDINGS.md`
-has one entry per milestone with what was verified, what was not, and every trap that cost time.
+```bash
+npm i @tourkit/react                                              # web
+npm i @tourkit/native react-native-svg react-native-reanimated    # react native
+```
 
-Docs live in [`docs/`](./docs/README.md).
+Docs: <https://tourkit-chi.vercel.app>. The markdown behind the site lives in
+[`docs/`](./docs/README.md).
 
 ## Packages
 

@@ -1,6 +1,9 @@
 # React Native
 
-Everything in the other pages applies. This is what differs.
+tourkit's React Native renderer, `@tourkit/native`, takes the same `TourConfig` and
+`TourStep` shape as the web renderer. Everything on the other pages applies. This page
+covers what differs on React Native: peer dependencies, `TourTarget` in place of CSS
+selectors, safe areas, and how measurement works without a DOM.
 
 ## Install
 

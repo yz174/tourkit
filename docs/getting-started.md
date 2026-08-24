@@ -1,5 +1,6 @@
 # Getting started
 
+tourkit is a product tour and onboarding walkthrough library for React and React Native.
 One steps file, two platforms. Write the tour once and run it in your web app and your React
 Native app.
 
