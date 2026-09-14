@@ -1,10 +1,12 @@
 import { arrow, autoUpdate, computePosition, flip, offset, shift } from "@floating-ui/dom";
+import { type Rect, resolveScrimPress } from "@tourkit/core";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { nextFocusTarget } from "./a11y/focus";
 import { useEngine, useTourContext } from "./context";
-import { holeClipPath } from "./dom/clip";
+import { type Hole, holeClipPath, holesClipPath } from "./dom/clip";
 import {
+  resolveTarget,
   resolveWithFingerprint,
   scrollIntoViewIfNeeded,
   scrollSettings,
@@ -23,7 +25,7 @@ function prefersReducedMotion(): boolean {
 }
 
 export function TourHost() {
-  const { components, registry, container, styled, classNames } = useTourContext();
+  const { components, registry, container, styled, classNames, scrollHandler } = useTourContext();
   const engine = useEngine();
   const snapshot = useTourSnapshot();
   const { next, prev, skip, stop } = useTour();
@@ -41,7 +43,7 @@ export function TourHost() {
   const placedOnce = useRef(false);
   const warned = useRef(new Set<string>());
 
-  const { status, step, stepIndex, total, theme, dismissible } = snapshot;
+  const { status, step, stepIndex, total, theme, dismissible, refreshToken } = snapshot;
   const running = status !== "idle";
   const active = status === "active";
   const target = step?.target ?? null;
@@ -103,9 +105,14 @@ export function TourHost() {
   useEffect(() => {
     if (!element) return;
     const { enabled, block, behavior } = scrollSettings(step?.scroll);
-    if (!enabled) return;
-    scrollIntoViewIfNeeded(element, block, reduceMotion ? "auto" : behavior);
-  }, [element, step, reduceMotion]);
+    if (!enabled || !step) return;
+    const resolved = reduceMotion ? ("auto" as const) : behavior;
+    if (scrollHandler) {
+      scrollHandler(element, { block, behavior: resolved }, step);
+      return;
+    }
+    scrollIntoViewIfNeeded(element, block, resolved);
+  }, [element, step, reduceMotion, scrollHandler]);
 
   const reposition = useCallback(async () => {
     if (!element || !target) return;
@@ -115,8 +122,9 @@ export function TourHost() {
     const card = cardRef.current;
     if (!card) return;
 
-    const middleware = [offset(14), flip(), shift({ padding: 16 })];
-    if (arrowRef.current) middleware.push(arrow({ element: arrowRef.current, padding: 12 }));
+    const middleware = [offset(theme.card.offset), flip(), shift({ padding: 16 })];
+    if (arrowRef.current)
+      middleware.push(arrow({ element: arrowRef.current, padding: theme.arrow.padding }));
 
     const result = await computePosition(element, card, {
       strategy: "fixed",
@@ -131,13 +139,21 @@ export function TourHost() {
       side: result.placement.split("-")[0] as CardPlacement["side"],
       arrow: data ? { left: Math.round(data.x ?? 0), top: Math.round(data.y ?? 0) } : null,
     });
-  }, [element, target, engine, step]);
+  }, [element, target, engine, step, theme.card.offset, theme.arrow.padding]);
 
   useEffect(() => {
     if (!element || !cardRef.current) return;
     void reposition();
     return autoUpdate(element, cardRef.current, () => void reposition());
   }, [element, reposition]);
+
+  useEffect(() => {
+    if (!element) return;
+    // Reading refreshToken is the point: engine.refresh() bumps it to force a remeasure
+    // without waiting for the next scroll or resize that autoUpdate would catch.
+    void refreshToken;
+    void reposition();
+  }, [refreshToken, element, reposition]);
 
   useEffect(() => {
     if (!running) {
@@ -214,20 +230,30 @@ export function TourHost() {
           ? theme.spotlight.radius
           : 8;
 
-    return holeClipPath(
-      vw,
-      vh,
-      rect.x - padding,
-      rect.y - padding,
-      rect.width + padding * 2,
-      rect.height + padding * 2,
-      base + padding,
-    );
-  }, [rect, step, theme, viewport]);
+    const pad = (box: Rect): Hole => ({
+      x: box.x - padding,
+      y: box.y - padding,
+      width: box.width + padding * 2,
+      height: box.height + padding * 2,
+      radius: base + padding,
+    });
+
+    // Extra targets are measured here rather than through the engine's rect store, so a
+    // refresh() has to recompute this memo. Reading the token is what makes that happen.
+    void refreshToken;
+
+    const extras = (step?.extraTargets ?? [])
+      .map((id) => resolveTarget(id, registry)?.getBoundingClientRect())
+      .filter((box): box is DOMRect => box !== undefined && box !== null);
+
+    return holesClipPath(vw, vh, [rect, ...extras].map(pad));
+  }, [rect, step, theme, viewport, registry, refreshToken]);
 
   if (!mounted || !running || !step) return null;
 
   const { Card, Backdrop } = components;
+  const scrimPress = resolveScrimPress(theme.scrim.press, dismissible);
+  const onScrimPress = scrimPress === "close" ? stop : scrimPress === "next" ? next : undefined;
   const interaction = step.interaction ?? "block";
   const holePadding = step.padding ?? theme.spotlight.padding;
   const holeBox = rect
@@ -262,7 +288,13 @@ export function TourHost() {
           className="tourkit-shield"
           data-tourkit="shield"
           aria-hidden="true"
-          style={{ position: "fixed", inset: 0, pointerEvents: "auto" }}
+          onClick={onScrimPress}
+          style={{
+            position: "fixed",
+            inset: 0,
+            pointerEvents: "auto",
+            cursor: scrimPress === "none" ? undefined : "pointer",
+          }}
         />
       )}
       {interaction === "advance-on-press" && holeBox ? (
@@ -303,7 +335,7 @@ export function TourHost() {
         data-tourkit-placement={placement.side}
         role="dialog"
         aria-modal="true"
-        aria-label={step.title ?? "Tour step"}
+        aria-label={step.title ?? step.label ?? "Tour step"}
         tabIndex={-1}
         style={{
           position: "fixed",

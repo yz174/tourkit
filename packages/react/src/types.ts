@@ -54,3 +54,13 @@ export type Slots = {
   Backdrop: ComponentType<BackdropProps>;
   Progress: ComponentType<ProgressProps>;
 };
+
+/**
+ * Replaces the built-in scrolling. `behavior` already accounts for reduced motion, so a handler
+ * that respects it can pass the value straight through.
+ */
+export type ScrollHandler = (
+  element: Element,
+  settings: { block: ScrollLogicalPosition; behavior: ScrollBehavior },
+  step: TourStep<unknown>,
+) => void;
