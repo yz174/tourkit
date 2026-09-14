@@ -18,8 +18,9 @@ for custom renderers, tooling and tests.
 | `@tourkit/ai` | The client half of question-to-tour. Safe in a browser bundle. |
 | `@tourkit/ai/server` | The server half. Holds your model key. |
 
-`@tourkit/react` and `@tourkit/native` re-export the types and the four helper functions you
-actually need from core, so a web-only app imports from one package.
+`@tourkit/react` and `@tourkit/native` re-export the engine, the persistence helpers, the theme
+and contrast helpers, the resolver helpers and every type, so an app that is not writing its own
+renderer never needs to depend on `@tourkit/core` directly.
 
 ## @tourkit/core
 
@@ -29,7 +30,8 @@ actually need from core, so a web-only app imports from one package.
 | --- | --- | --- |
 | `TourEngine` | `new TourEngine<Ctx>(options: EngineOptions<Ctx>)` | The whole state machine. `TourProvider` creates one for you. Build one directly only for a renderer of your own. |
 | `EngineOptions<Ctx>` | `{ tours, context, theme?, storage?, nav?, onEvent? }` | |
-| `EngineSnapshot<Ctx>` | `{ status, tourId, stepIndex, step, steps, total, activeTarget, rects, theme, dismissible }` | Immutable. A new object on every change, which is what `useSyncExternalStore` needs. |
+| `EngineSnapshot<Ctx>` | `{ status, tourId, stepIndex, step, steps, total, activeTarget, rects, theme, dismissible, refreshToken, isFirst, isLast, hasNext, hasPrev }` | Immutable. A new object on every change, which is what `useSyncExternalStore` needs. The four flags count visible steps only. |
+| `StartOptions` | `{ at?: number \| string }` | A step index or step id to open at. |
 
 Methods on `TourEngine`:
 
@@ -39,11 +41,20 @@ Methods on `TourEngine`:
 | `getSnapshot` | `() => EngineSnapshot<Ctx>` | Bound, so it can be passed by reference. |
 | `setContext` | `(context: Ctx) => void` | Re-filters `when` predicates immediately, including mid-tour. |
 | `setOptions` | `(patch: Partial<Omit<EngineOptions<Ctx>, "context">>) => void` | Everything except context can change while a tour runs. |
-| `start` | `(tour: string \| TourConfig<Ctx>) => Promise<void>` | An id starts a registered tour. A config object starts an ad-hoc one that is never registered. |
+| `start` | `(tour: string \| TourConfig<Ctx>, options?: StartOptions) => Promise<void>` | An id starts a registered tour. A config object starts an ad-hoc one that is never registered. `{ at }` opens at a step and takes precedence over a saved resume position. |
 | `stop` | `() => Promise<void>` | Records the outcome as `skipped`. |
 | `advance` | `() => Promise<void>` | Runs `onAdvance`, then moves on. Ignored unless the status is `active`. |
 | `back` | `() => Promise<void>` | Ignored on the first step. |
-| `skip` | `() => Promise<void>` | Moves on without running `onAdvance`. |
+| `skip` | `() => Promise<void>` | Moves on without running `onAdvance`. Never blocked by a veto hook. |
+| `moveTo` | `(index: number) => Promise<void>` | Jumps to a visible step by position. Emits `step:exit` and `step:enter`, and does not run `onAdvance`. |
+| `show` | `(stepId: string) => Promise<void>` | The same, addressed by id. |
+| `getById` | `(stepId: string) => TourStep<Ctx> \| null` | Visible steps only, so a step hidden by `when` reads as `null`. |
+| `getNextStep` | `() => TourStep<Ctx> \| null` | |
+| `getPreviousStep` | `() => TourStep<Ctx> \| null` | |
+| `onStep` | `(stepId: string, handler: StepEventHandler) => () => void` | Subscribes to one step's `before-show`, `show`, `before-hide`, `hide`. Returns the unsubscribe function. A handler that throws is swallowed. |
+| `isOpen` | `(stepId: string) => boolean` | True only while that step is active. |
+| `whenShown` | `(stepId: string) => Promise<boolean>` | Resolves true when the step is on screen, false when the run ends without it. |
+| `refresh` | `() => void` | Bumps `refreshToken` on the snapshot. The renderers watch it and remeasure. |
 | `setRect` | `(target: string, rect: Rect) => void` | How a renderer reports a measurement. Ignored when the rect has not moved by half a pixel. |
 | `clearRect` | `(target: string) => void` | |
 
@@ -80,6 +91,29 @@ All three strategies ignore case, a trailing slash, a query string and a hash. S
 Types: `Theme`, `ThemeOverride`, `TextStyle`, `FontWeight`, `ProgressStyle`, `TextContrast`. Every
 token is listed in the [Theme reference](./theme.md).
 
+### Geometry helpers
+
+| Export | Signature |
+| --- | --- |
+| `resolveCorners` | `(radius: Radius, width: number, height: number) => [number, number, number, number]`, clamped, in path order: top-left, top-right, bottom-right, bottom-left |
+| `resolveScrimPress` | `(press: ScrimPress \| undefined, dismissible: boolean) => ScrimPress`. Downgrades `"close"` to `"none"` when the step may not be dismissed. |
+| `padRadius` | `(radius: Radius, padding: number) => Radius`. Grows a radius to match a hole padded outwards by the same amount. |
+| `formatProgress` | `(template: string, index: number, total: number) => string`. Fills `{{current}}` (one-based) and `{{total}}`. |
+| `Radius` | `number \| Corners` |
+| `Corners` | `{ topLeft?, topRight?, bottomRight?, bottomLeft? }` |
+
+### Buttons
+
+| Export | Signature |
+| --- | --- |
+| `resolveButtons` | `<Ctx>(step: TourStep<Ctx> \| null \| undefined, dismissible?: boolean) => ResolvedButtons` |
+| `StepButtons` | `{ next?, back?, close?, nextDisabled?, backDisabled?, nextLabel?, backLabel?, doneLabel?, closeLabel? }`, the shape of `TourStep.buttons` |
+| `ResolvedButtons` | The same with every field filled in, plus `advanceLabel(isLast)` |
+
+Both renderers call this, which is what keeps the web and React Native cards showing the same
+controls. A custom `Card` slot can call it too rather than reading `step.buttons` by hand.
+Passing `dismissible: false` suppresses the close button.
+
 ### Contrast
 
 | Export | Signature | Notes |
@@ -110,8 +144,8 @@ answers.
 
 `Align`, `EventHandler`, `Fingerprint`, `GateArgs`, `GateTimeoutPolicy`, `Interaction`,
 `NavAdapter`, `PersistedTour`, `Placement`, `ScrollOptions`, `StorageAdapter`,
-`TargetDescriptor`, `TargetManifest`, `TourConfig`, `TourEvent`, `TourEventName`, `TourOutcome`,
-`TourStatus`, `TourStep`.
+`ScrimPress`, `StepEventHandler`, `StepEventName`, `StepInfo`, `TargetDescriptor`, `TargetManifest`, `TourConfig`, `TourEvent`, `TourEventName`,
+`TourOutcome`, `TourStatus`, `TourStep`.
 
 `TourConfig` and `TourStep` are documented field by field in the
 [Step reference](./steps.md). The four small ones:
@@ -130,6 +164,9 @@ type NavAdapter = {
 };
 
 type TourEvent = { tourId: string; stepId: string | null; stepIndex: number; total: number };
+
+// The second argument to onEnter, onAdvance and the three onBefore hooks.
+type StepInfo = { index: number; total: number; stepId: string; tourId: string };
 
 type PersistedTour = { outcome: TourOutcome; stepId: string; updatedAt: number };
 ```
@@ -159,7 +196,7 @@ type TourRecorderProps = {
 
 | Hook | Returns |
 | --- | --- |
-| `useTour()` | `{ running, start, stop, next, prev, skip }`. The controls, with no re-render on step changes. `running` is a boolean, so it only re-renders when the tour starts or ends. |
+| `useTour()` | `{ running, start, stop, next, prev, skip, moveTo, show, refresh }`. The controls, with no re-render on step changes. `running` is a boolean, so it only re-renders when the tour starts or ends. |
 | `useTourState()` | The whole snapshot plus `rect`, `next`, `prev`, `skip`, `stop`. The headless path. |
 | `useTourSnapshot()` | `EngineSnapshot<Ctx>`. Re-renders on every engine change. |
 | `useTourSelector(select)` | `T`. Re-renders only when the selected value changes. |
@@ -187,7 +224,10 @@ outside the component. An inline arrow re-subscribes on every render.
 | `scrollSettings` | `(scroll: boolean \| ScrollOptions \| undefined) => { enabled, block, behavior }` |
 | `scrollIntoViewIfNeeded` | `(element, block, behavior) => void`. A no-op when the element is already fully in view. |
 | `toFloatingPlacement` | `(placement: Placement, align?: Align) => Placement` in Floating UI's vocabulary |
-| `holePathData` | `(vw, vh, x, y, width, height, cornerRadius) => string`. An SVG path: the viewport rectangle, then the rounded hole. |
+| `holesPathData` | `(vw, vh, holes: Hole[]) => string`. One viewport rectangle then a subpath per hole, for `extraTargets`. Zero-sized holes are dropped. |
+| `holesClipPath` | The same, wrapped as a CSS `clip-path`. |
+| `Hole` | `{ x, y, width, height, radius: Radius }` |
+| `holePathData` | `(vw, vh, x, y, width, height, radius: Radius) => string`. An SVG path: the viewport rectangle, then the rounded hole. `radius` takes a number or a `Corners` object. |
 | `holeClipPath` | The same wrapped as `path(evenodd, "...")`, ready for a CSS `clip-path`. |
 | `nextFocusTarget` | `(container: HTMLElement, active: Element \| null, backwards: boolean) => HTMLElement \| null`. The focus trap's cycle. |
 
@@ -217,8 +257,9 @@ The scoring rules and the tie-breaking are in [When a target breaks](./self-heal
 
 ### Slot types
 
-`CardProps`, `BackdropProps`, `ProgressProps`, `Slots`, `CardPlacement`, `ClassNames`. All six are
-shown in use in [Customization](./customization.md#level-2-component-slots).
+`CardProps`, `BackdropProps`, `ProgressProps`, `Slots`, `CardPlacement`, `ClassNames`,
+`ScrollHandler`. They are shown in use in
+[Customization](./customization.md#level-2-component-slots).
 
 ## @tourkit/native
 
@@ -233,6 +274,13 @@ name and the same meaning. What is different:
 | `createBlurBackdrop({ MaskedView, BlurView })` | You pass the modules; the package never imports them. See [Customization](./customization.md#blur). |
 | `Spotlight`, `CoachCard`, `ProgressDots`, `TouchShield` | The default slots. |
 | `useTargetMeasure` | The Reanimated frame-callback measurement behind `TourTarget`. |
+
+`SpotlightGeometry` now carries four animated corner values: `radius` (top-left, kept under that
+name so an existing custom spotlight keeps working), `radiusTopRight`, `radiusBottomRight` and
+`radiusBottomLeft`.
+
+`holesMaskPath(screenWidth, screenHeight, holes: MaskHole[])` is the native counterpart of
+`holesPathData`, for steps using `extraTargets`.
 
 Geometry and layout helpers, all pure and all tested: `holeMaskPath`, `resolvePlacement`,
 `cardWidthFor`, `shieldRegions`, `padRect`, `resolvePadding`, `resolveRadius`, `scrollOffsetFor`,
