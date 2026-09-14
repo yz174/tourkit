@@ -1,12 +1,23 @@
 export type {
   Align,
+  EngineOptions,
+  EngineSnapshot,
   EventHandler,
   GateArgs,
+  GateTimeoutPolicy,
   Interaction,
   NavAdapter,
+  PersistedTour,
   Placement,
   Rect,
+  ResolvedButtons,
+  ScrimPress,
   ScrollOptions,
+  StartOptions,
+  StepButtons,
+  StepEventHandler,
+  StepEventName,
+  StepInfo,
   StorageAdapter,
   TargetDescriptor,
   TargetManifest,
@@ -15,9 +26,30 @@ export type {
   TourConfig,
   TourEvent,
   TourEventName,
+  TourOutcome,
+  TourStatus,
   TourStep,
 } from "@tourkit/core";
-export { createNavAdapter, defaultTheme, mergeTheme, routeMatches } from "@tourkit/core";
+export {
+  clearRecord,
+  contrastRatio,
+  createNavAdapter,
+  defaultTheme,
+  indexOfStep,
+  isDark,
+  luminance,
+  mergeTheme,
+  readRecord,
+  rectsEqual,
+  resolveButtons,
+  resolveScrimPress,
+  routeMatches,
+  stepAt,
+  storageKey,
+  TourEngine,
+  visibleSteps,
+  writeRecord,
+} from "@tourkit/core";
 export { useEngine, useTourContext } from "./context";
 export {
   useTargetManifest,
@@ -61,7 +93,7 @@ export {
   type MaskedViewComponent,
 } from "./ui/BlurSpotlight";
 export { CoachCard } from "./ui/CoachCard";
-export { holeMaskPath } from "./ui/geometry";
+export { holeMaskPath, holesMaskPath, type MaskHole } from "./ui/geometry";
 export { ProgressDots } from "./ui/ProgressDots";
 export {
   cardWidthFor,
