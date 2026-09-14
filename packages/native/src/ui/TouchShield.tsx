@@ -7,14 +7,29 @@ export type TouchShieldProps = {
   interaction: Interaction;
   hole: Rect | null;
   onHolePress: () => void;
+  /** Pressing the dimmed area outside the hole. Omitted when the theme says it does nothing. */
+  onScrimPress?: (() => void) | undefined;
   size: Size;
 };
 
-export function TouchShield({ interaction, hole, onHolePress, size }: TouchShieldProps) {
+export function TouchShield({
+  interaction,
+  hole,
+  onHolePress,
+  onScrimPress,
+  size,
+}: TouchShieldProps) {
   const { width, height } = size;
 
   if (interaction === "block") {
-    return <Pressable style={StyleSheet.absoluteFill} accessible={false} testID="tourkit-shield" />;
+    return (
+      <Pressable
+        style={StyleSheet.absoluteFill}
+        onPress={onScrimPress}
+        accessible={false}
+        testID="tourkit-shield"
+      />
+    );
   }
 
   const regions = shieldRegions(hole, width, height);
@@ -25,6 +40,7 @@ export function TouchShield({ interaction, hole, onHolePress, size }: TouchShiel
         <Pressable
           key={`shield-${region.x}-${region.y}-${region.width}-${region.height}`}
           accessible={false}
+          onPress={onScrimPress}
           testID="tourkit-shield-region"
           style={{
             position: "absolute",

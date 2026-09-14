@@ -1,3 +1,4 @@
+import { padRadius, resolveCorners, resolveScrimPress } from "@tourkit/core";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AccessibilityInfo,
@@ -52,6 +53,9 @@ export function TourHost() {
   const width = useSharedValue(0);
   const height = useSharedValue(0);
   const radius = useSharedValue(0);
+  const radiusTopRight = useSharedValue(0);
+  const radiusBottomRight = useSharedValue(0);
+  const radiusBottomLeft = useSharedValue(0);
   const cardLeft = useSharedValue(0);
   const cardTop = useSharedValue(0);
   const cardOpacity = useSharedValue(0);
@@ -61,6 +65,8 @@ export function TourHost() {
   const cardRef = useRef<TargetNode | null>(null);
 
   const { status, step, stepIndex, total, activeTarget, theme, dismissible } = snapshot;
+  const scrimPress = resolveScrimPress(theme.scrim.press, dismissible);
+  const onScrimPress = scrimPress === "close" ? stop : scrimPress === "next" ? next : undefined;
   const running = status !== "idle";
   const hole = activeTarget ? (snapshot.rects[activeTarget] ?? null) : null;
 
@@ -149,7 +155,7 @@ export function TourHost() {
       y: padded.y,
       width: padded.width,
       height: padded.height,
-      radius: targetRadius + padding,
+      corners: resolveCorners(padRadius(targetRadius, padding), padded.width, padded.height),
     };
 
     if (animate) {
@@ -157,13 +163,19 @@ export function TourHost() {
       y.value = withTiming(next.y, config);
       width.value = withTiming(next.width, config);
       height.value = withTiming(next.height, config);
-      radius.value = withTiming(next.radius, config);
+      radius.value = withTiming(next.corners[0], config);
+      radiusTopRight.value = withTiming(next.corners[1], config);
+      radiusBottomRight.value = withTiming(next.corners[2], config);
+      radiusBottomLeft.value = withTiming(next.corners[3], config);
     } else {
       x.value = next.x;
       y.value = next.y;
       width.value = next.width;
       height.value = next.height;
-      radius.value = next.radius;
+      radius.value = next.corners[0];
+      radiusTopRight.value = next.corners[1];
+      radiusBottomRight.value = next.corners[2];
+      radiusBottomLeft.value = next.corners[3];
       placed.current = true;
     }
   }, [
@@ -181,6 +193,9 @@ export function TourHost() {
     width,
     height,
     radius,
+    radiusTopRight,
+    radiusBottomRight,
+    radiusBottomLeft,
     cardOpacity,
   ]);
 
@@ -242,8 +257,29 @@ export function TourHost() {
   }, [step]);
 
   const spotlight: SpotlightGeometry = useMemo(
-    () => ({ x, y, width, height, radius }),
-    [x, y, width, height, radius],
+    () => ({ x, y, width, height, radius, radiusTopRight, radiusBottomRight, radiusBottomLeft }),
+    [x, y, width, height, radius, radiusTopRight, radiusBottomRight, radiusBottomLeft],
+  );
+
+  // Extra targets are read straight from the rect store: a TourTarget registers its box there,
+  // so an extra that is not mounted simply has no rect and is skipped.
+  const extraHoles = useMemo(
+    () =>
+      (step?.extraTargets ?? []).flatMap((id) => {
+        const box = snapshot.rects[id];
+        if (!box) return [];
+        const padded = padRect(box, padding);
+        return [
+          {
+            x: padded.x,
+            y: padded.y,
+            width: padded.width,
+            height: padded.height,
+            radius: padRadius(targetRadius, padding),
+          },
+        ];
+      }),
+    [step, snapshot.rects, padding, targetRadius],
   );
 
   const cardStyle = useAnimatedStyle(() => ({
@@ -275,9 +311,10 @@ export function TourHost() {
         interaction={step.interaction ?? "block"}
         hole={hole ? padRect(hole, padding) : null}
         onHolePress={next}
+        onScrimPress={onScrimPress}
         size={size}
       />
-      <Backdrop geometry={spotlight} theme={theme} size={size} />
+      <Backdrop geometry={spotlight} extraHoles={extraHoles} theme={theme} size={size} />
       <Animated.View
         ref={cardRef}
         accessible={false}
