@@ -1,4 +1,4 @@
-import type { EngineSnapshot, Rect, TargetManifest, TourConfig } from "@tourkit/core";
+import type { EngineSnapshot, Rect, StartOptions, TargetManifest, TourConfig } from "@tourkit/core";
 import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
 import { useEngine, useTourContext } from "./context";
 import { buildManifest } from "./manifest";
@@ -19,15 +19,21 @@ export function useTour() {
   const running = useTourSelector((snapshot) => snapshot.status !== "idle");
 
   const start = useCallback(
-    (tour: string | TourConfig<unknown>) => void engine.start(tour),
+    (tour: string | TourConfig<unknown>, options?: StartOptions) =>
+      void engine.start(tour, options),
     [engine],
   );
   const stop = useCallback(() => void engine.stop(), [engine]);
   const next = useCallback(() => void engine.advance(), [engine]);
   const prev = useCallback(() => void engine.back(), [engine]);
   const skip = useCallback(() => void engine.skip(), [engine]);
+  const moveTo = useCallback((index: number) => void engine.moveTo(index), [engine]);
+  const show = useCallback((stepId: string) => void engine.show(stepId), [engine]);
+  const refresh = useCallback(() => engine.refresh(), [engine]);
+  const isOpen = useCallback((stepId: string) => engine.isOpen(stepId), [engine]);
+  const whenShown = useCallback((stepId: string) => engine.whenShown(stepId), [engine]);
 
-  return { running, start, stop, next, prev, skip };
+  return { running, start, stop, next, prev, skip, moveTo, show, refresh, isOpen, whenShown };
 }
 
 export function useTourState<Ctx = unknown>() {

@@ -1,13 +1,24 @@
 export type {
   Align,
+  EngineOptions,
+  EngineSnapshot,
   EventHandler,
   Fingerprint,
   GateArgs,
+  GateTimeoutPolicy,
   Interaction,
   NavAdapter,
+  PersistedTour,
   Placement,
   Rect,
+  ResolvedButtons,
+  ScrimPress,
   ScrollOptions,
+  StartOptions,
+  StepButtons,
+  StepEventHandler,
+  StepEventName,
+  StepInfo,
   StorageAdapter,
   TargetDescriptor,
   TargetManifest,
@@ -16,12 +27,33 @@ export type {
   TourConfig,
   TourEvent,
   TourEventName,
+  TourOutcome,
+  TourStatus,
   TourStep,
 } from "@tourkit/core";
-export { createNavAdapter, defaultTheme, mergeTheme, routeMatches } from "@tourkit/core";
+export {
+  clearRecord,
+  contrastRatio,
+  createNavAdapter,
+  defaultTheme,
+  indexOfStep,
+  isDark,
+  luminance,
+  mergeTheme,
+  readRecord,
+  rectsEqual,
+  resolveButtons,
+  resolveScrimPress,
+  routeMatches,
+  stepAt,
+  storageKey,
+  TourEngine,
+  visibleSteps,
+  writeRecord,
+} from "@tourkit/core";
 export { nextFocusTarget } from "./a11y/focus";
 export { useEngine, useTourContext } from "./context";
-export { holeClipPath, holePathData } from "./dom/clip";
+export { type Hole, holeClipPath, holePathData, holesClipPath, holesPathData } from "./dom/clip";
 export {
   buildFingerprint,
   healTarget,
@@ -63,6 +95,7 @@ export type {
   CardProps,
   ClassNames,
   ProgressProps,
+  ScrollHandler,
   Slots,
 } from "./types";
 export { CoachCard } from "./ui/CoachCard";
