@@ -161,7 +161,6 @@ the hole from animating to jumping.
   rebuild for a cosmetic gain. The dim backdrop needs nothing beyond `react-native-svg`.
 - `placement: "left"` and `"right"`. They fall back to `auto`, because a 320px card does not fit
   beside anything on a 390px screen.
-- Multiple holes in one step.
 
 ## Recording
 

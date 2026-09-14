@@ -131,6 +131,25 @@ default and the four that differ per platform, is in the [Theme reference](./the
 
 Replace a piece, keep the engine. Every slot gets typed props.
 
+Reach for a slot to change **layout**. To change which controls the card shows, or what they say,
+use `buttons` on the step and keep the default card:
+
+```ts
+{ id: "billing", target: "billing", buttons: { back: true, close: true, nextLabel: "Got it" } }
+```
+
+That covers a back button, a close button, hiding Next and relabelling any of them, on both
+platforms. See [Buttons](./steps.md#buttons). Writing a whole `Card` to add one button means
+reimplementing placement, theming, ARIA and the arrow along with it.
+
+A custom card can still read the same configuration rather than inventing its own:
+
+```tsx
+import { resolveButtons } from "@tourkit/core";
+
+const buttons = resolveButtons(step, dismissible);
+```
+
 ```tsx
 <TourProvider components={{ Card, Backdrop, Progress }} tours={tours}>
 ```
