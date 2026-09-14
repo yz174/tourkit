@@ -1,3 +1,4 @@
+import { resolveButtons } from "@tourkit/core";
 import type { CSSProperties } from "react";
 import { useTourContext } from "../context";
 import type { CardPlacement, CardProps } from "../types";
@@ -27,12 +28,28 @@ export function CoachCard({
   theme,
   styled,
   classNames,
+  isFirst,
   isLast,
+  dismissible,
   next,
+  prev,
+  stop,
 }: CardProps) {
   const { components } = useTourContext();
   const Progress = components.Progress;
   const position = theme.arrow.show ? arrowPosition(placement, theme.arrow.size) : null;
+  const buttons = resolveButtons(step, dismissible);
+
+  const actionStyle: CSSProperties | undefined = styled
+    ? {
+        ...theme.text.action,
+        color: theme.accent,
+        background: "none",
+        border: "none",
+        cursor: "pointer",
+        padding: 0,
+      }
+    : undefined;
 
   return (
     <div
@@ -65,6 +82,35 @@ export function CoachCard({
             ...(styled ? { backgroundColor: theme.card.background, borderRadius: 3 } : undefined),
           }}
         />
+      ) : null}
+
+      {buttons.close ? (
+        <button
+          type="button"
+          className="tourkit-close"
+          data-tourkit="close"
+          aria-label={buttons.closeLabel}
+          onClick={stop}
+          style={
+            styled
+              ? {
+                  position: "absolute",
+                  top: 8,
+                  right: 8,
+                  width: 24,
+                  height: 24,
+                  lineHeight: 1,
+                  color: theme.text.body.color,
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: 0,
+                }
+              : { position: "absolute", top: 0, right: 0 }
+          }
+        >
+          &times;
+        </button>
       ) : null}
 
       {step.title ? (
@@ -102,26 +148,42 @@ export function CoachCard({
         }
       >
         <Progress index={index} total={total} theme={theme} styled={styled} />
-        <button
-          type="button"
-          className="tourkit-next"
-          data-tourkit="next"
-          onClick={next}
-          style={
-            styled
-              ? {
-                  ...theme.text.action,
-                  color: theme.accent,
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  padding: 0,
-                }
-              : undefined
-          }
-        >
-          {isLast ? "Done" : "Next"}
-        </button>
+        <div style={styled ? { display: "flex", alignItems: "center", gap: 12 } : undefined}>
+          {buttons.back ? (
+            <button
+              type="button"
+              className="tourkit-back"
+              data-tourkit="back"
+              onClick={prev}
+              disabled={isFirst || buttons.backDisabled}
+              style={
+                styled
+                  ? {
+                      ...actionStyle,
+                      color: theme.text.body.color,
+                      opacity: isFirst || buttons.backDisabled ? 0.4 : 1,
+                    }
+                  : undefined
+              }
+            >
+              {buttons.backLabel}
+            </button>
+          ) : null}
+          {buttons.next ? (
+            <button
+              type="button"
+              className="tourkit-next"
+              data-tourkit="next"
+              onClick={next}
+              disabled={buttons.nextDisabled}
+              style={
+                buttons.nextDisabled && actionStyle ? { ...actionStyle, opacity: 0.4 } : actionStyle
+              }
+            >
+              {buttons.advanceLabel(isLast)}
+            </button>
+          ) : null}
+        </div>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import type { StorageAdapter, TourEngine } from "@tourkit/core";
 import { createContext, useContext } from "react";
-import type { ClassNames, Slots } from "./types";
+import type { ClassNames, ScrollHandler, Slots } from "./types";
 
 export type TourContextValue = {
   engine: TourEngine<unknown>;
@@ -9,6 +9,7 @@ export type TourContextValue = {
   container: Element | null;
   styled: boolean;
   classNames: ClassNames;
+  scrollHandler?: ScrollHandler | undefined;
   storage: StorageAdapter;
   openHint: string | null;
   setOpenHint: (id: string | null) => void;
