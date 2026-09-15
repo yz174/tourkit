@@ -269,3 +269,27 @@ describe("waiting until a step is on screen", () => {
     expect(await engine.whenShown("nope")).toBe(false);
   });
 });
+
+describe("whenShown before any tour has started", () => {
+  test("an unknown step resolves false rather than waiting forever", async () => {
+    const engine = new TourEngine<Ctx>({ tours: [three()], context });
+
+    expect(await engine.whenShown("nope")).toBe(false);
+  });
+
+  test("a step of a registered tour still waits for that tour to start", async () => {
+    const engine = new TourEngine<Ctx>({ tours: [three()], context });
+    let resolved = false;
+    const waiting = engine.whenShown("b").then((shown) => {
+      resolved = shown;
+    });
+
+    await engine.start("onboarding");
+    expect(resolved).toBe(false);
+
+    await engine.advance();
+    await waiting;
+
+    expect(resolved).toBe(true);
+  });
+});

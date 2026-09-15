@@ -104,10 +104,12 @@ export class TourEngine<Ctx = unknown> {
 
     let index = 0;
     let resumed = false;
+    // Asking for a position, even one that does not exist, means "not a resume". Falling back
+    // to the saved step would drop the caller somewhere they did not ask for.
     const requested = resolveStart(steps, options?.at);
     if (requested >= 0) {
       index = requested;
-    } else if (record?.outcome === "pending") {
+    } else if (options?.at === undefined && record?.outcome === "pending") {
       const found = indexOfStep(steps, record.stepId);
       if (found >= 0) {
         index = found;
@@ -228,14 +230,22 @@ export class TourEngine<Ctx = unknown> {
    */
   whenShown(stepId: string): Promise<boolean> {
     if (this.#openStepId === stepId) return Promise.resolve(true);
-    if (this.#status !== "idle" && indexOfStep(this.#visible(), stepId) < 0) {
-      return Promise.resolve(false);
-    }
+    if (!this.#knowsStep(stepId)) return Promise.resolve(false);
     return new Promise<boolean>((resolve) => {
       const waiters = this.#shownWaiters.get(stepId) ?? new Set<(shown: boolean) => void>();
       waiters.add(resolve);
       this.#shownWaiters.set(stepId, waiters);
     });
+  }
+
+  /**
+   * Whether any step with this id could still be shown: the running tour's visible steps while
+   * one is running, otherwise any registered tour. Without the idle case, waiting on an id that
+   * exists nowhere would queue a waiter nothing ever settles.
+   */
+  #knowsStep(stepId: string): boolean {
+    if (this.#status !== "idle") return indexOfStep(this.#visible(), stepId) >= 0;
+    return this.#options.tours.some((tour) => tour.steps.some((step) => step.id === stepId));
   }
 
   #emitStep(name: StepEventName, index: number, steps: TourStep<Ctx>[]): void {

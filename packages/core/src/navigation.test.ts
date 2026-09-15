@@ -267,3 +267,61 @@ describe("position flags on the snapshot", () => {
     expect(snapshot.hasPrev).toBe(false);
   });
 });
+
+describe("an explicit start position that does not exist", () => {
+  function seeded() {
+    const store = new Map<string, string>([
+      ["tour:onboarding:v1", JSON.stringify({ outcome: "pending", stepId: "c", updatedAt: 1 })],
+    ]);
+    return {
+      async get(key: string) {
+        return store.get(key) ?? null;
+      },
+      async set(key: string, value: string) {
+        store.set(key, value);
+      },
+      async remove(key: string) {
+        store.delete(key);
+      },
+    };
+  }
+
+  test("an out-of-range index starts at the first step, it does not resume", async () => {
+    const engine = new TourEngine<Ctx>({ tours: [four()], context, storage: seeded() });
+
+    await engine.start("onboarding", { at: 99 });
+
+    expect(engine.getSnapshot().step?.id).toBe("a");
+  });
+
+  test("an unknown step id starts at the first step, it does not resume", async () => {
+    const engine = new TourEngine<Ctx>({ tours: [four()], context, storage: seeded() });
+
+    await engine.start("onboarding", { at: "nope" });
+
+    expect(engine.getSnapshot().step?.id).toBe("a");
+  });
+
+  test("omitting the position still resumes", async () => {
+    const engine = new TourEngine<Ctx>({ tours: [four()], context, storage: seeded() });
+
+    await engine.start("onboarding");
+
+    expect(engine.getSnapshot().step?.id).toBe("c");
+  });
+
+  test("asking for a position reports tour:start, not tour:resume", async () => {
+    const seen: string[] = [];
+    const engine = new TourEngine<Ctx>({
+      tours: [four()],
+      context,
+      storage: seeded(),
+      onEvent: (name) => seen.push(name),
+    });
+
+    await engine.start("onboarding", { at: 99 });
+
+    expect(seen).toContain("tour:start");
+    expect(seen).not.toContain("tour:resume");
+  });
+});
