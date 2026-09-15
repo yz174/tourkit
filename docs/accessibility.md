@@ -53,7 +53,7 @@ and `tour:abort`.
 
 | Element | What it carries |
 | --- | --- |
-| The card wrapper | `role="dialog"`, `aria-modal="true"`, `aria-label` set to the step's `title`, or `"Tour step"` when it has none |
+| The card wrapper | `role="dialog"`, `aria-modal="true"`, `aria-label` set to the step's `title`, then its `label`, then `"Tour step"` |
 | The shield | `aria-hidden="true"`. It is a click blocker, not content. |
 | The arrow anchor | `aria-hidden="true"` |
 | The `advance-on-press` catcher | A real `<button>` labelled `Continue: {title}`, or `"Continue the tour"` |
@@ -64,6 +64,14 @@ does.
 
 Give every step a `title`. It is the dialog's accessible name, and a step without one announces
 as "Tour step".
+
+For a step that deliberately shows no title, name it with `label` instead:
+
+```ts
+{ id: "filters", target: "filters", body: "Narrow the list.", label: "Filters panel" }
+```
+
+`title` wins when both are set, because the visible heading is the better name.
 
 ## React Native
 
@@ -137,19 +145,29 @@ function Card({ step, isLast, next }: CardProps) {
 
 ## Going back
 
-The default card renders one control: Next, or Done on the last step. Going back is
-`ArrowLeft` only.
+The default card shows one control: Next, or Done on the last step. `ArrowLeft` also goes back,
+but a keyboard shortcut is not an affordance: someone on a switch device or a screen reader has
+no way to discover it.
 
-That is fine for a three-step tour and thin for a ten-step one. Someone using a switch device or
-a screen reader has no back affordance at all. If your tour is long enough that people will want
-to re-read a step, put a Back button in a custom card and wire it to `prev`:
+Turn the Back button on for any tour long enough that people will want to re-read a step:
 
-```tsx
-{!isFirst ? <button type="button" onClick={prev}>Back</button> : null}
+```ts
+{ id: "billing", target: "billing", buttons: { back: true } }
 ```
 
-`prev` is already in `CardProps`, alongside `skip` and `stop`. `dismissible` is there too, so a
-card can hide its own dismiss control when the tour says the user may not leave.
+Once for the whole tour:
+
+```ts
+{ id: "onboarding", version: 1, defaultStepOptions: { buttons: { back: true } }, steps: [...] }
+```
+
+It renders disabled on the first step rather than disappearing, so the control does not move
+between steps. `buttons.close` adds a dismiss control the same way, carrying `aria-label` from
+`closeLabel`, and it is suppressed automatically when the step or tour sets `dismissible: false`.
+
+A custom `Card` still receives `prev`, `skip`, `stop`, `isFirst` and `dismissible` in
+`CardProps`, and can call `resolveButtons(step, dismissible)` from `@tourkit/core` to read the
+same configuration the default card reads.
 
 ## Writing steps people can follow
 

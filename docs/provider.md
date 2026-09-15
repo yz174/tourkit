@@ -42,6 +42,24 @@ the inferred type.
 | --- | --- | --- | --- |
 | `container` | `Element \| null` | `document.body` | Where the overlay is portalled. |
 | `styled` | `boolean` | `true` | `false` drops every cosmetic style and keeps only the structural ones. Importing from `@tourkit/react/unstyled` sets it for you. |
+| `scrollHandler` | `ScrollHandler` | | Replaces the built-in scrolling. See below. |
+
+### Scrolling it yourself
+
+`scroll` on a step covers `scrollIntoView`. A virtual list, a custom scroll container or a
+library that owns scrolling needs more than that, so the provider takes a handler:
+
+```tsx
+<TourProvider
+  tours={tours}
+  scrollHandler={(element, { block, behavior }, step) => {
+    listRef.current?.scrollToIndex({ index: rowFor(step), align: block, behavior });
+  }}
+>
+```
+
+It is called instead of the built-in scrolling for any step whose `scroll` is not `false`.
+`behavior` already accounts for reduced motion, so passing it straight through is correct.
 
 ## React Native only
 
@@ -80,17 +98,38 @@ use.
 ## Controls
 
 ```tsx
-const { start, stop, next, prev, skip, running } = useTour();
+const { start, stop, next, prev, skip, moveTo, show, refresh, isOpen, whenShown } =
+  useTour();
 ```
 
 | Function | Behaviour |
 | --- | --- |
 | `start(tourId)` | Begins a tour, resuming from a saved position when one matches. |
-| `stop()` | Ends it and records the outcome as skipped. |
-| `next()` | Runs `onAdvance`, then moves on. Ignored while a step is still resolving. |
-| `prev()` | Goes back one visible step. Ignored on the first. |
-| `skip()` | Moves on without running `onAdvance`. |
+| `start(tourId, { at })` | Begins at a step index or step id, ignoring any saved position. An index or id that does not exist falls back to the first step. |
+| `stop()` | Ends it and records the outcome as skipped. Blocked by `onBeforeExit`. |
+| `next()` | Runs `onAdvance`, then moves on. Ignored while a step is still resolving. Blocked by `onBeforeAdvance`. |
+| `prev()` | Goes back one visible step. Ignored on the first. Blocked by `onBeforeBack`. |
+| `skip()` | Moves on without running `onAdvance`. Never blocked. |
+| `moveTo(index)` | Jumps to a visible step by position. Ignored when the index does not exist. |
+| `show(stepId)` | Jumps to a visible step by id. Ignored when the id does not exist. |
+| `isOpen(stepId)` | Whether that step is on screen now. A step waiting on its gate is not open yet. |
+| `whenShown(stepId)` | Resolves `true` when the step appears, `false` if the tour ends without it. Never hangs. |
+| `refresh()` | Remeasures the target and repositions the card now, rather than waiting for the next scroll or resize. Use it after your own layout animation finishes. |
 | `running` | True from `start` until the tour ends, including while a gate is pending. |
+
+`moveTo` and `show` emit `step:exit` for the step they leave and `step:enter` for the one they
+open, and they do not run `onAdvance`. A jump is not an advance.
+
+## Reading where the tour is
+
+`useTourState()` returns the whole snapshot, which carries four position flags alongside
+`stepIndex` and `total`:
+
+```tsx
+const { isFirst, isLast, hasNext, hasPrev } = useTourState();
+```
+
+They count visible steps only, so a step hidden by `when` never makes `isLast` lie.
 
 ## Changing props mid-tour
 

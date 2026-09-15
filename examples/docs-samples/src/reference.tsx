@@ -18,7 +18,6 @@ import {
   nextFocusTarget,
   TourHint,
   TourProvider,
-  TourRecorder,
   useTourContext,
   useTourSelector,
 } from "@tourkit/react";
@@ -127,7 +126,6 @@ export function Shell({ children }: { children: ReactNode }) {
         body="Narrow rides to the ones passing your gate."
         theme={{ accent: "#ff0066" }}
       />
-      <TourRecorder name="Driver onboarding" />
     </TourProvider>
   );
 }

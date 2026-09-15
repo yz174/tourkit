@@ -1,17 +1,31 @@
+import { resolveButtons } from "@tourkit/core";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useTourContext } from "../context";
 import type { CardProps } from "../types";
 
-export function CoachCard({ step, index, total, placement, theme, isLast, next }: CardProps) {
+export function CoachCard({
+  step,
+  index,
+  total,
+  placement,
+  theme,
+  isFirst,
+  isLast,
+  dismissible,
+  next,
+  prev,
+  stop,
+}: CardProps) {
   const { components } = useTourContext();
   const Progress = components.Progress;
   const arrow = theme.arrow.show ? placement.arrow : null;
+  const buttons = resolveButtons(step, dismissible);
 
   return (
     <View
       accessible
       accessibilityLiveRegion="polite"
-      accessibilityLabel={`${step.title ?? ""}. ${step.body ?? ""}. Step ${index + 1} of ${total}.`}
+      accessibilityLabel={`${step.title ?? step.label ?? ""}. ${step.body ?? ""}. Step ${index + 1} of ${total}.`}
       style={[
         styles.card,
         {
@@ -37,22 +51,63 @@ export function CoachCard({ step, index, total, placement, theme, isLast, next }
         />
       ) : null}
 
+      {buttons.close ? (
+        <Pressable
+          onPress={stop}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel={buttons.closeLabel}
+          style={({ pressed }) => [styles.close, pressed ? styles.pressed : null]}
+        >
+          <Text style={[theme.text.action, { color: theme.text.body.color }]}>×</Text>
+        </Pressable>
+      ) : null}
+
       {step.title ? <Text style={theme.text.title}>{step.title}</Text> : null}
       {step.body ? <Text style={[theme.text.body, styles.body]}>{step.body}</Text> : null}
 
       <View style={styles.footer}>
         <Progress index={index} total={total} theme={theme} />
-        <Pressable
-          onPress={next}
-          hitSlop={12}
-          accessibilityRole="button"
-          accessibilityLabel={isLast ? "Finish the tour" : "Next step"}
-          style={({ pressed }) => (pressed ? styles.pressed : null)}
-        >
-          <Text style={[theme.text.action, { color: theme.accent }]}>
-            {isLast ? "Done" : "Next"}
-          </Text>
-        </Pressable>
+        <View style={styles.actions}>
+          {buttons.back && !isFirst ? (
+            <Pressable
+              onPress={prev}
+              disabled={buttons.backDisabled}
+              hitSlop={12}
+              accessibilityRole="button"
+              accessibilityLabel="Previous step"
+              style={({ pressed }) => (pressed ? styles.pressed : null)}
+            >
+              <Text
+                style={[
+                  theme.text.action,
+                  { color: theme.text.body.color, opacity: buttons.backDisabled ? 0.4 : 1 },
+                ]}
+              >
+                {buttons.backLabel}
+              </Text>
+            </Pressable>
+          ) : null}
+          {buttons.next ? (
+            <Pressable
+              onPress={next}
+              disabled={buttons.nextDisabled}
+              hitSlop={12}
+              accessibilityRole="button"
+              accessibilityLabel={isLast ? "Finish the tour" : "Next step"}
+              style={({ pressed }) => (pressed ? styles.pressed : null)}
+            >
+              <Text
+                style={[
+                  theme.text.action,
+                  { color: theme.accent, opacity: buttons.nextDisabled ? 0.4 : 1 },
+                ]}
+              >
+                {buttons.advanceLabel(isLast)}
+              </Text>
+            </Pressable>
+          ) : null}
+        </View>
       </View>
     </View>
   );
@@ -76,4 +131,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   pressed: { opacity: 0.6 },
+  actions: { flexDirection: "row", alignItems: "center", gap: 12 },
+  close: { position: "absolute", top: 8, right: 8, zIndex: 1 },
 });

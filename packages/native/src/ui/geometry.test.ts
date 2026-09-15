@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { holeMaskPath, roundedRectPath } from "./geometry";
+import { holeMaskPath, holesMaskPath, roundedRectPath } from "./geometry";
 
 const OUTER = "M0 0H400V800H0Z";
 
@@ -59,5 +59,79 @@ describe("roundedRectPath", () => {
 
   test("closes the path", () => {
     expect(roundedRectPath(10, 20, 100, 40, 8).endsWith("Z")).toBe(true);
+  });
+});
+
+describe("per-corner radius", () => {
+  test("equal corners match the single-number form", () => {
+    expect(
+      holeMaskPath(400, 800, 10, 20, 100, 40, {
+        topLeft: 8,
+        topRight: 8,
+        bottomRight: 8,
+        bottomLeft: 8,
+      }),
+    ).toBe(holeMaskPath(400, 800, 10, 20, 100, 40, 8));
+  });
+
+  test("a corner left out is square", () => {
+    expect(holeMaskPath(400, 800, 0, 0, 100, 40, { topLeft: 8 })).toBe(
+      holeMaskPath(400, 800, 0, 0, 100, 40, {
+        topLeft: 8,
+        topRight: 0,
+        bottomRight: 0,
+        bottomLeft: 0,
+      }),
+    );
+  });
+
+  test("different corners produce a different path", () => {
+    expect(holeMaskPath(400, 800, 0, 0, 100, 40, { topLeft: 8 })).not.toBe(
+      holeMaskPath(400, 800, 0, 0, 100, 40, { bottomRight: 8 }),
+    );
+  });
+
+  test("each corner clamps to half the smaller side", () => {
+    expect(holeMaskPath(400, 800, 0, 0, 100, 40, { topLeft: 999 })).toBe(
+      holeMaskPath(400, 800, 0, 0, 100, 40, { topLeft: 20 }),
+    );
+  });
+
+  test("roundedRectPath takes per-corner values too", () => {
+    expect(roundedRectPath(0, 0, 100, 40, { topLeft: 8 })).not.toBe(
+      roundedRectPath(0, 0, 100, 40, 8),
+    );
+  });
+});
+
+describe("several holes", () => {
+  test("no holes is just the outer rect", () => {
+    expect(holesMaskPath(400, 800, [])).toBe(OUTER);
+  });
+
+  test("one hole matches the single-rect form", () => {
+    expect(holesMaskPath(400, 800, [{ x: 10, y: 20, width: 100, height: 40, radius: 8 }])).toBe(
+      holeMaskPath(400, 800, 10, 20, 100, 40, 8),
+    );
+  });
+
+  test("two holes append two subpaths", () => {
+    const one = holesMaskPath(400, 800, [{ x: 0, y: 0, width: 50, height: 50, radius: 4 }]);
+    const two = holesMaskPath(400, 800, [
+      { x: 0, y: 0, width: 50, height: 50, radius: 4 },
+      { x: 100, y: 100, width: 50, height: 50, radius: 4 },
+    ]);
+
+    expect(two.startsWith(one)).toBe(true);
+    expect(two.length).toBeGreaterThan(one.length);
+  });
+
+  test("a zero-sized hole is dropped", () => {
+    expect(
+      holesMaskPath(400, 800, [
+        { x: 0, y: 0, width: 50, height: 50, radius: 4 },
+        { x: 100, y: 100, width: 0, height: 20, radius: 4 },
+      ]),
+    ).toBe(holesMaskPath(400, 800, [{ x: 0, y: 0, width: 50, height: 50, radius: 4 }]));
   });
 });

@@ -17,6 +17,11 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
+    "./dom": {
+      "types": "./dist/dom/index.d.ts",
+      "import": "./dist/dom/index.js",
+      "require": "./dist/dom/index.cjs"
+    },
     "./package.json": "./package.json"
   },
   "files": [
@@ -25,6 +30,17 @@
   "scripts": {
     "build": "tsup",
     "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "@floating-ui/dom": ">=1.8.0"
+  },
+  "peerDependenciesMeta": {
+    "@floating-ui/dom": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@floating-ui/dom": "^1.8.0"
   },
   "publishConfig": {
     "access": "public"

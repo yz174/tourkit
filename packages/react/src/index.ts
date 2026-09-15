@@ -1,13 +1,24 @@
 export type {
   Align,
+  EngineOptions,
+  EngineSnapshot,
   EventHandler,
   Fingerprint,
   GateArgs,
+  GateTimeoutPolicy,
   Interaction,
   NavAdapter,
+  PersistedTour,
   Placement,
   Rect,
+  ResolvedButtons,
+  ScrimPress,
   ScrollOptions,
+  StartOptions,
+  StepButtons,
+  StepEventHandler,
+  StepEventName,
+  StepInfo,
   StorageAdapter,
   TargetDescriptor,
   TargetManifest,
@@ -16,26 +27,55 @@ export type {
   TourConfig,
   TourEvent,
   TourEventName,
+  TourOutcome,
+  TourStatus,
   TourStep,
 } from "@tourkit/core";
-export { createNavAdapter, defaultTheme, mergeTheme, routeMatches } from "@tourkit/core";
-export { nextFocusTarget } from "./a11y/focus";
-export { useEngine, useTourContext } from "./context";
-export { holeClipPath, holePathData } from "./dom/clip";
 export {
+  clearRecord,
+  contrastRatio,
+  createNavAdapter,
+  defaultTheme,
+  indexOfStep,
+  isDark,
+  luminance,
+  mergeTheme,
+  readRecord,
+  rectsEqual,
+  resolveButtons,
+  resolveScrimPress,
+  routeMatches,
+  stepAt,
+  storageKey,
+  TourEngine,
+  visibleSteps,
+  writeRecord,
+} from "@tourkit/core";
+export {
+  browserStorage,
   buildFingerprint,
+  buildManifest,
+  cssPath,
+  describeElement,
+  type Hole,
   healTarget,
+  holeClipPath,
+  holePathData,
+  holesClipPath,
+  holesPathData,
+  memoryStorage,
   nearestHeading,
-  scoreCandidate,
-} from "./dom/fingerprint";
-export {
+  nextFocusTarget,
   type Resolution,
   resolveTarget,
   resolveWithFingerprint,
+  scoreCandidate,
   scrollIntoViewIfNeeded,
   scrollSettings,
+  textOf,
   toFloatingPlacement,
-} from "./dom/resolve";
+} from "@tourkit/core/dom";
+export { useEngine, useTourContext } from "./context";
 export {
   useTargetManifest,
   useTour,
@@ -44,16 +84,6 @@ export {
   useTourState,
   useTourTarget,
 } from "./hooks";
-export { buildManifest } from "./manifest";
-export {
-  cssPath,
-  describeElement,
-  type RecordedStep,
-  type Recording,
-  textOf,
-} from "./recorder/selector";
-export { TourRecorder, type TourRecorderProps } from "./recorder/TourRecorder";
-export { browserStorage, memoryStorage } from "./storage";
 export { TourHint, type TourHintProps } from "./TourHint";
 export { TourHost } from "./TourHost";
 export { TourProvider, type TourProviderProps } from "./TourProvider";
@@ -63,6 +93,7 @@ export type {
   CardProps,
   ClassNames,
   ProgressProps,
+  ScrollHandler,
   Slots,
 } from "./types";
 export { CoachCard } from "./ui/CoachCard";

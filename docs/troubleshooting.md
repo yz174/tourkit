@@ -275,26 +275,57 @@ await storage.remove("tourkit:hint:filters");
 A hint whose target does not resolve renders nothing at all: no dot, no error, no warning. It
 appears as soon as the element mounts.
 
-## The recorder panel never appears
+## The recorder bar never appears
 
-The panel polls `GET /status` and renders only while `tourkit record` is answering. Check, in
-order:
+The bar is injected as a script tag, and it stays hidden until the recorder server answers its
+handshake. Work down this list in order; each item rules out the one above it.
 
-1. `tourkit record` is running in a second terminal.
-2. `<TourRecorder />` is mounted, inside the provider, in a development build.
-3. Nothing is blocking `http://127.0.0.1:5178`.
+1. **Is the server up?** `curl http://127.0.0.1:5178/status` should return
+   `{"ok":true,"outDir":"..."}`. If it refuses the connection, the server is not running or is on
+   another port.
+2. **Did the tag get written?** Look for `<!-- tourkit-record-start -->` in the file you injected
+   into. `inject.mjs` prints `{"ok":true,...}` on success and names the reason on failure.
+3. **Is that the file the browser is actually serving?** A project with several HTML entries can
+   inject into one and serve another. View source in the browser and look for the tag there, not
+   on disk.
+4. **Did the dev server hot-reload it?** Editing an HTML entry does not always trigger a reload.
+   Reload the page by hand.
+5. **Is a Content-Security-Policy blocking it?** A cross-origin script from `127.0.0.1:5178` needs
+   that origin in `script-src`, and the handshake needs it in `connect-src`. The browser console
+   names the directive that refused.
+6. **Framework document rather than plain HTML?** In JSX or TSX an HTML comment is not a comment.
+   The markers must be `{/* tourkit-record-start */}` and the tag self-closing.
 
-Pass `autoShow={false}` to render it unconditionally, which is the clipboard flow with no server.
+`inject.mjs` refuses two things on purpose. `hard_excluded` means the path runs through
+`node_modules` or `.git`, and no flag overrides it. `generated_file` means the file is gitignored
+or carries an `@generated` or `DO NOT EDIT` header, so the tag would be wiped by the next build;
+inject into the source HTML instead.
 
-`npx tourkit` only works when npm wrote the shim it looks for. Bun on Windows writes
-`tourkit.exe` and `tourkit.bunx` instead, and npx then tries to fetch a package called `tourkit`
-from the registry and fails with a 404. Use the runner that matches your install.
+## The tag is still in my HTML
+
+Run `node skills/tourkit/scripts/inject.mjs --file <your.html> --remove`. It restores the file byte
+for byte, so `git diff` on that file should come back empty afterwards. If it does not, something
+else edited the file while the tag was in.
+
+A tag left behind is inert once the server stops: the bar polls, gets nothing, and never renders.
+
+## `already_running` when starting the recorder
+
+A previous session left a server up and its `.tourkit-record.json` behind. Run
+`node skills/tourkit/scripts/record-server.mjs stop`, which kills the process and removes the file.
+
+`port_in_use` is different: something else holds that port. Start on another one and pass the same
+`--port` to `inject.mjs`.
 
 ## The native recorder captures nothing
 
 It can only capture taps on mounted `TourTarget`s. A production build has no queryable view tree
-to resolve anything else against, so you wrap first and record second. The web recorder has no
-such limit and needs nothing prepared.
+to resolve anything else against, so you wrap first and record second. The web recorder has no such
+limit and needs nothing prepared.
+
+React Native keeps a mounted panel rather than an injected script, because there is no HTML to
+inject into. The server it talks to is the same one, answering the same `GET /status`. A physical
+device also needs `--host 0.0.0.0` so it can reach your machine; a simulator does not.
 
 ## Asking a question returns 422
 

@@ -1,14 +1,17 @@
-import type { Rect, Theme, TourStep } from "@tourkit/core";
+import type { Radius, Rect, Theme, TourStep } from "@tourkit/core";
 import type { TargetGeometry } from "../types";
 
 export function resolveRadius(
   step: TourStep<unknown> | null,
   target: TargetGeometry | undefined,
   theme: Theme,
-): number {
+): Radius {
   if (typeof step?.radius === "number") return step.radius;
+  if (step?.radius && typeof step.radius === "object") return step.radius;
   if (step?.radius === "auto") return target?.radius ?? 0;
   if (typeof theme.spotlight.radius === "number") return theme.spotlight.radius;
+  if (theme.spotlight.radius && typeof theme.spotlight.radius === "object")
+    return theme.spotlight.radius;
   return target?.radius ?? 0;
 }
 

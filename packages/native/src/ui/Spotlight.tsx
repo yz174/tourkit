@@ -25,7 +25,7 @@ function warnMissingBlur(): void {
   );
 }
 
-export function Spotlight({ geometry, theme, size }: BackdropProps) {
+export function Spotlight({ geometry, extraHoles, theme, size }: BackdropProps) {
   const { width, height } = size;
   if (theme.blur.enabled && __DEV__) warnMissingBlur();
   const maskId = `tourkitHole${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
@@ -54,11 +54,17 @@ export function Spotlight({ geometry, theme, size }: BackdropProps) {
       geometry.y.value - ringWidth,
       geometry.width.value + ringWidth * 2,
       geometry.height.value + ringWidth * 2,
-      geometry.radius.value + ringWidth,
+      {
+        topLeft: geometry.radius.value + ringWidth,
+        topRight: geometry.radiusTopRight.value + ringWidth,
+        bottomRight: geometry.radiusBottomRight.value + ringWidth,
+        bottomLeft: geometry.radiusBottomLeft.value + ringWidth,
+      },
     ),
     opacity: 0.3 + breathe.value * 0.55,
   }));
 
+  const extras = extraHoles ?? [];
   const animatedProps = useAnimatedProps(() => ({
     d: holeMaskPath(
       width,
@@ -67,15 +73,28 @@ export function Spotlight({ geometry, theme, size }: BackdropProps) {
       geometry.y.value,
       geometry.width.value,
       geometry.height.value,
-      geometry.radius.value,
+      {
+        topLeft: geometry.radius.value,
+        topRight: geometry.radiusTopRight.value,
+        bottomRight: geometry.radiusBottomRight.value,
+        bottomLeft: geometry.radiusBottomLeft.value,
+      },
     ),
   }));
+
+  // Extra holes are drawn as their own path rather than folded into the animated one: the
+  // worklet cannot iterate a JS array captured from render without copying it every frame.
+  const extraPath = extras.reduce(
+    (path, hole) => path + roundedRectPath(hole.x, hole.y, hole.width, hole.height, hole.radius),
+    "",
+  );
 
   return (
     <Svg style={StyleSheet.absoluteFill} pointerEvents="none">
       <Defs>
         <Mask id={maskId}>
           <AnimatedPath animatedProps={animatedProps} fill="#ffffff" fillRule="evenodd" />
+          {extraPath ? <Path d={extraPath} fill="#000000" fillRule="evenodd" /> : null}
         </Mask>
       </Defs>
       <SvgRect

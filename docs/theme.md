@@ -45,6 +45,18 @@ The dimmed area outside the hole.
 | `scrim.color` | `string` | `#0B121E` | |
 | `scrim.opacity` | `number` | `0.86` | 0 hides the dimming and keeps the cutout geometry. |
 
+### Pressing the dim
+
+| Token | Type | Default | Effect |
+| --- | --- | --- | --- |
+| `scrim.press` | `"none" \| "close" \| "next"` | `"none"` | What a press on the dimmed area does. |
+
+`"none"` is the default because a stray click should not lose someone's place. driver.js closes
+on a backdrop click by default; this does not.
+
+`"close"` is refused on a step or tour with `dismissible: false`, since that is an exit. `"next"`
+is allowed either way, because advancing is not leaving.
+
 ## spotlight
 
 The hole itself.
@@ -52,7 +64,7 @@ The hole itself.
 | Token | Type | Default | Effect |
 | --- | --- | --- | --- |
 | `spotlight.padding` | `number` | `4` | Space between the target's box and the edge of the hole. A step's `padding` overrides it. |
-| `spotlight.radius` | `number \| "auto"` | `"auto"` | Corner radius of the hole. |
+| `spotlight.radius` | `number \| Corners \| "auto"` | `"auto"` | Corner radius of the hole. A `Corners` object rounds each corner separately. |
 
 `"auto"` is the one token that resolves differently per platform:
 
@@ -67,6 +79,29 @@ floating action button is `radius: 999`; a tight list row is `radius: 8, padding
 On web the padding is added to the radius, so the hole's corners stay concentric with the
 target's as the padding grows.
 
+### Rounding each corner separately
+
+`radius` also takes an object. Any corner you leave out is square.
+
+```ts
+{ id: "tab", target: "tab", radius: { topLeft: 12, topRight: 12 } }
+```
+
+```ts
+type Corners = {
+  topLeft?: number;
+  topRight?: number;
+  bottomRight?: number;
+  bottomLeft?: number;
+};
+```
+
+Each corner is clamped to half the shorter side of the hole, the same rule a single number has
+always followed, so an oversized value rounds to a stadium rather than overflowing.
+
+It works on both platforms. On React Native each corner animates as its own value, so a hole
+morphing from a circle to a half-rounded card interpolates corner by corner.
+
 ## card
 
 | Token | Type | Default | Effect |
@@ -76,6 +111,7 @@ target's as the padding grows.
 | `card.padding` | `number` | `16` | |
 | `card.maxWidth` | `number` | `320` | The card is `max-content` up to this width. |
 | `card.shadow` | `"none" \| "lifted"` | `"lifted"` | Web draws `0 4px 10px rgba(17, 24, 39, 0.15)`. React Native draws the iOS shadow plus `elevation: 5`. |
+| `card.offset` | `number` | `14` | Gap between the card and the target it points at. |
 
 ## text
 
@@ -127,6 +163,13 @@ custom card needs the same answers.
 | --- | --- | --- | --- |
 | `arrow.size` | `number` | `14` | The square that gets rotated 45 degrees. |
 | `arrow.show` | `boolean` | `true` | `false` removes it. A step with no target never has one. |
+| `arrow.padding` | `number` | `8` | How close the arrow may sit to the card's corner. Web only; it is Floating UI's arrow padding. |
+
+To drop the arrow on one step, override the token in that step's theme:
+
+```ts
+{ id: "wide", target: "table", theme: { arrow: { show: false } } }
+```
 
 ## motion
 
@@ -154,6 +197,7 @@ Reduced motion is read from the platform on both sides. Web watches
 | `progress.style` | `ProgressStyle` | `"dots"` | See below. |
 | `progress.activeColor` | `string \| null` | `null` | Falls back to `accent`. |
 | `progress.restColor` | `string \| null` | `null` | Falls back to `accent`. |
+| `progress.template` | `string` | `"{{current}} / {{total}}"` | Used by the `numbers` style. `{{current}}` is one-based. |
 
 | `progress.style` | What it draws |
 | --- | --- |
@@ -163,6 +207,13 @@ Reduced motion is read from the platform on both sides. Web watches
 | `continuous` | A single track that fills as the tour advances. |
 
 All four render on both platforms.
+
+`numbers` reads `progress.template`. `{{current}}` and `{{total}}` are filled in, each can appear
+more than once, and anything else is left alone:
+
+```ts
+theme={{ progress: { style: "numbers", template: "Step {{current}} of {{total}}" } }}
+```
 
 ## ring
 
@@ -204,18 +255,18 @@ Every field is optional. This is the resolved default, which is what `defaultThe
 const defaultTheme = {
   accent: "#1E9CFE",
   zIndex: 10000,
-  scrim: { color: "#0B121E", opacity: 0.86 },
+  scrim: { color: "#0B121E", opacity: 0.86, press: "none" },
   spotlight: { padding: 4, radius: "auto" },
-  card: { background: "#FBFCFE", radius: 16, padding: 16, maxWidth: 320, shadow: "lifted" },
+  card: { background: "#FBFCFE", radius: 16, padding: 16, maxWidth: 320, shadow: "lifted", offset: 14 },
   text: {
     title: { fontSize: 15, fontWeight: "700", color: "#111827" },
     body: { fontSize: 13, fontWeight: "500", color: "#6B7280" },
     action: { fontSize: 13, fontWeight: "700", color: "#1E9CFE" },
     contrast: "manual",
   },
-  arrow: { size: 14, show: true },
+  arrow: { size: 14, show: true, padding: 8 },
   motion: { morph: 280, travel: 200, fade: 180, easing: "easeOutQuint" },
-  progress: { style: "dots", activeColor: null, restColor: null },
+  progress: { style: "dots", activeColor: null, restColor: null, template: "{{current}} / {{total}}" },
   ring: { show: false, color: null, width: 2, period: 1400 },
   blur: { enabled: false, radius: 7 },
 };

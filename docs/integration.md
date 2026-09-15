@@ -132,6 +132,66 @@ createRoot(document.getElementById("root") as HTMLElement).render(
 If you use React Router and any step declares a `route`, the provider has to sit inside the
 router so it can call `useLocation`. See [Navigation](./navigation.md#react-router).
 
+## Vue, Angular, Svelte, Ember, Astro, plain HTML
+
+No React, no provider. Install the player and mount it once:
+
+```bash
+npm i @tourkit/core @floating-ui/dom
+```
+
+```ts
+// src/tours/index.ts
+import { TourEngine } from "@tourkit/core";
+import { mountTour } from "@tourkit/core/dom";
+import { onboarding } from "./onboarding.tour";
+
+export const engine = new TourEngine({ tours: [onboarding], context: {} });
+
+export const player = mountTour(engine);
+```
+
+Import that module from whatever runs once at startup:
+
+| Framework | Where |
+| --- | --- |
+| Vue | `src/main.ts`, after `app.mount()` |
+| Angular | `src/main.ts`, after `bootstrapApplication(...).then(...)` |
+| Svelte, SvelteKit | `src/routes/+layout.svelte` in `onMount` |
+| Ember | an instance initializer |
+| Astro | a `<script>` in the layout wrapping the toured pages |
+| Qwik, Solid | the root component's mount effect |
+| Electron, Tauri | the renderer entry, same as the web framework inside it |
+| plain HTML | a `<script type="module">` before `</body>` |
+
+Mark targets with the attribute, exactly as in React:
+
+```html
+<button data-tour-id="post-ride">Post a ride</button>
+```
+
+Or register an element you already hold a reference to:
+
+```ts
+import { registerTarget } from "@tourkit/core/dom";
+
+const dispose = registerTarget("post-ride", element);
+// call dispose() when the element goes away
+```
+
+Start the tour from the engine:
+
+```ts
+engine.start("onboarding");
+```
+
+`mountTour` returns `{ destroy() }`. Call it on teardown anywhere hot module replacement is on, or
+a reload leaves two players on the page.
+
+`@floating-ui/dom` is an optional peer of `@tourkit/core`, so no package manager installs it for
+you. Without it, importing `@tourkit/core/dom` throws. React apps get it through `@tourkit/react`,
+and React Native never pulls it in.
+
 ## Expo Router
 
 ```tsx
@@ -266,7 +326,7 @@ no ambient type declaration.
 
 - [ ] `tours.ts` exports plain data and imports nothing from a renderer
 - [ ] `tours` is a module constant, not built inside a component
-- [ ] The provider sits at the root and never remounts
+- [ ] The provider sits at the root and never remounts, or `mountTour` is called once at startup
 - [ ] `<TourProvider<AppContext>>` is annotated if any step uses `when` or `gate`
 - [ ] Every `target` matches a `data-tour-id`, a registered id, or a live selector
 - [ ] `version` gets bumped whenever the steps change

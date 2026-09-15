@@ -1,3 +1,4 @@
+import { formatProgress } from "@tourkit/core";
 import { useMemo } from "react";
 import type { ProgressProps } from "../types";
 
@@ -32,7 +33,7 @@ export function ProgressDots({ index, total, theme, styled }: ProgressProps) {
             : undefined
         }
       >
-        {index + 1} / {total}
+        {formatProgress(theme.progress.template, index, total)}
       </span>
     );
   }

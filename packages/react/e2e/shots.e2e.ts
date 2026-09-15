@@ -43,15 +43,3 @@ test("capture the generated tour", async ({ page }) => {
   await page.waitForTimeout(600);
   await page.screenshot({ path: `${OUT}/05-generated.png` });
 });
-
-test("capture the recorder", async ({ page }) => {
-  await page.setViewportSize({ width: 1000, height: 760 });
-  await page.goto("/recorder.html");
-
-  await page.click("[data-tourkit-recorder-toggle]");
-  await page.click('[data-tour-id="post-ride"]');
-  await page.click('[data-tour-id="inbox"]');
-  await page.click(".danger-btn");
-  await page.waitForTimeout(300);
-  await page.screenshot({ path: `${OUT}/06-recorder.png` });
-});

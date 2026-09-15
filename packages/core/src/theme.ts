@@ -1,4 +1,6 @@
 import { contrastRatio } from "./contrast";
+import type { Radius } from "./corners";
+import type { ScrimPress } from "./scrim";
 
 export type FontWeight =
   | "normal"
@@ -22,19 +24,25 @@ export type TextContrast = "manual" | "auto";
 export type Theme = {
   accent: string;
   zIndex: number;
-  scrim: { color: string; opacity: number };
-  spotlight: { padding: number; radius: number | "auto" };
+  scrim: { color: string; opacity: number; press: ScrimPress };
+  spotlight: { padding: number; radius: Radius | "auto" };
   card: {
     background: string;
     radius: number;
     padding: number;
     maxWidth: number;
     shadow: "none" | "lifted";
+    offset: number;
   };
   text: { title: TextStyle; body: TextStyle; action: TextStyle; contrast: TextContrast };
-  arrow: { size: number; show: boolean };
+  arrow: { size: number; show: boolean; padding: number };
   motion: { morph: number; travel: number; fade: number; easing: string };
-  progress: { style: ProgressStyle; activeColor: string | null; restColor: string | null };
+  progress: {
+    style: ProgressStyle;
+    activeColor: string | null;
+    restColor: string | null;
+    template: string;
+  };
   ring: { show: boolean; color: string | null; width: number; period: number };
   blur: { enabled: boolean; radius: number };
 };
@@ -61,7 +69,7 @@ export type ThemeOverride = {
 export const defaultTheme: Theme = {
   accent: "#1E9CFE",
   zIndex: 10000,
-  scrim: { color: "#0B121E", opacity: 0.86 },
+  scrim: { color: "#0B121E", opacity: 0.86, press: "none" },
   spotlight: { padding: 4, radius: "auto" },
   card: {
     background: "#FBFCFE",
@@ -69,6 +77,7 @@ export const defaultTheme: Theme = {
     padding: 16,
     maxWidth: 320,
     shadow: "lifted",
+    offset: 14,
   },
   text: {
     title: { fontSize: 15, fontWeight: "700", color: "#111827" },
@@ -76,9 +85,14 @@ export const defaultTheme: Theme = {
     action: { fontSize: 13, fontWeight: "700", color: "#1E9CFE" },
     contrast: "manual",
   },
-  arrow: { size: 14, show: true },
+  arrow: { size: 14, show: true, padding: 8 },
   motion: { morph: 280, travel: 200, fade: 180, easing: "easeOutQuint" },
-  progress: { style: "dots", activeColor: null, restColor: null },
+  progress: {
+    style: "dots",
+    activeColor: null,
+    restColor: null,
+    template: "{{current}} / {{total}}",
+  },
   ring: { show: false, color: null, width: 2, period: 1400 },
   blur: { enabled: false, radius: 7 },
 };

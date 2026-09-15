@@ -2,6 +2,7 @@ import type { Rect, Theme, TourStep } from "@tourkit/core";
 import type { ComponentRef, ComponentType, RefObject } from "react";
 import type { View } from "react-native";
 import type { SharedValue } from "react-native-reanimated";
+import type { MaskHole } from "./ui/geometry";
 import type { PlacementResult } from "./ui/placement";
 
 export type Insets = { top: number; bottom: number; left: number; right: number };
@@ -19,7 +20,11 @@ export type SpotlightGeometry = {
   y: SharedValue<number>;
   width: SharedValue<number>;
   height: SharedValue<number>;
+  /** Kept as the top-left corner, so an existing custom spotlight keeps working. */
   radius: SharedValue<number>;
+  radiusTopRight: SharedValue<number>;
+  radiusBottomRight: SharedValue<number>;
+  radiusBottomLeft: SharedValue<number>;
 };
 
 export type CardProps<Ctx = unknown> = {
@@ -42,6 +47,11 @@ export type Size = { width: number; height: number };
 
 export type BackdropProps = {
   geometry: SpotlightGeometry;
+  /**
+   * Static holes for a step's `extraTargets`. They are not animated: only the main hole morphs
+   * between steps, because a shared value cannot be created per element at runtime.
+   */
+  extraHoles?: MaskHole[];
   theme: Theme;
   size: Size;
 };

@@ -1,21 +1,12 @@
 import { TourRecorder as NativeRecorder } from "@tourkit/native";
-import { TourRecorder } from "@tourkit/react";
 
 declare const __DEV__: boolean;
 
-export function DevTools() {
-  return process.env.NODE_ENV === "development" ? (
-    <TourRecorder
-      name="Driver onboarding"
-      onFinish={(recording) => console.log(recording.steps.length)}
-    />
-  ) : null;
-}
-
-export function DevToolsWithoutServer() {
-  return <TourRecorder autoShow={false} name="Driver onboarding" />;
-}
-
+/**
+ * Web recording no longer mounts a component. The tourkit skill injects a script tag into the
+ * HTML entry, so there is nothing to render and nothing to strip from the production bundle.
+ * See docs/recorder.md.
+ */
 export function NativeDevTools() {
   return __DEV__ ? <NativeRecorder name="Driver onboarding" /> : null;
 }

@@ -1,3 +1,5 @@
+import type { StepButtons } from "./buttons";
+import type { Radius } from "./corners";
 import type { Rect } from "./rect";
 import type { ThemeOverride } from "./theme";
 
@@ -15,26 +17,48 @@ export type ScrollOptions = {
 
 export type GateArgs<Ctx> = { context: Ctx; step: TourStep<Ctx> };
 
+/** Where a hook is firing. Counts visible steps only, so it matches the progress indicator. */
+export type StepInfo = {
+  index: number;
+  total: number;
+  stepId: string;
+  tourId: string;
+};
+
 export type TourStep<Ctx = unknown> = {
   id: string;
   target?: string | null;
+  /**
+   * Extra elements cut out of the same overlay. The card still points at `target`.
+   * An extra target that is not on the page is skipped rather than failing the step.
+   */
+  extraTargets?: string[];
   title?: string;
   body?: string;
+  /**
+   * Accessible name for the step's dialog when it shows no `title`. Ignored when `title` is set,
+   * since the visible title already names the dialog.
+   */
+  label?: string;
   data?: Record<string, unknown>;
   route?: string;
   when?: (context: Ctx) => boolean;
   gate?: (args: GateArgs<Ctx>) => boolean | Promise<boolean>;
   gateTimeoutMs?: number;
   onGateTimeout?: GateTimeoutPolicy;
-  onEnter?: (context: Ctx) => void | Promise<void>;
-  onAdvance?: (context: Ctx) => void | Promise<void>;
+  onEnter?: (context: Ctx, info: StepInfo) => void | Promise<void>;
+  onAdvance?: (context: Ctx, info: StepInfo) => void | Promise<void>;
+  onBeforeAdvance?: (context: Ctx, info: StepInfo) => boolean | Promise<boolean>;
+  onBeforeBack?: (context: Ctx, info: StepInfo) => boolean | Promise<boolean>;
+  onBeforeExit?: (context: Ctx, info: StepInfo) => boolean | Promise<boolean>;
   placement?: Placement;
   align?: Align;
   interaction?: Interaction;
   dismissible?: boolean;
   scroll?: boolean | ScrollOptions;
   padding?: number;
-  radius?: number | "auto";
+  radius?: Radius | "auto";
+  buttons?: StepButtons;
   fingerprint?: Fingerprint;
   theme?: ThemeOverride;
 };
@@ -44,8 +68,10 @@ export type TourConfig<Ctx = unknown> = {
   version: number;
   entryRoute?: string;
   steps: TourStep<Ctx>[];
+  defaultStepOptions?: Omit<TourStep<Ctx>, "id">;
   theme?: ThemeOverride;
   dismissible?: boolean;
+  onBeforeExit?: (context: Ctx, info: StepInfo) => boolean | Promise<boolean>;
 };
 
 export type TourEventName =
@@ -66,6 +92,10 @@ export type TourEvent = {
 };
 
 export type EventHandler = (name: TourEventName, event: TourEvent) => void;
+
+export type StepEventName = "before-show" | "show" | "before-hide" | "hide";
+
+export type StepEventHandler = (name: StepEventName, info: StepInfo) => void;
 
 export type StorageAdapter = {
   get(key: string): Promise<string | null>;

@@ -39,7 +39,12 @@ export function createBlurBackdrop({
         geometry.y.value,
         geometry.width.value,
         geometry.height.value,
-        geometry.radius.value,
+        {
+          topLeft: geometry.radius.value,
+          topRight: geometry.radiusTopRight.value,
+          bottomRight: geometry.radiusBottomRight.value,
+          bottomLeft: geometry.radiusBottomLeft.value,
+        },
       ),
     }));
 

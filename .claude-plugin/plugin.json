@@ -1,0 +1,22 @@
+{
+  "name": "tourkit",
+  "version": "0.2.0",
+  "description": "Record, author, wire, heal and review in-app product tours built with tourkit. Records by clicking through a running app in any web framework (React, Vue, Angular, Svelte, Ember, Astro, Qwik, Solid, plain HTML, Electron, Tauri) or React Native, with no component to mount, then writes step copy grounded in the component source.",
+  "author": {
+    "name": "yz174",
+    "url": "https://github.com/yz174"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/yz174/tourkit#readme",
+  "repository": "https://github.com/yz174/tourkit",
+  "keywords": [
+    "tour",
+    "product-tour",
+    "onboarding",
+    "walkthrough",
+    "coach-marks",
+    "spotlight",
+    "recorder",
+    "tourkit"
+  ]
+}
