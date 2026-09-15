@@ -196,7 +196,7 @@ type TourRecorderProps = {
 
 | Hook | Returns |
 | --- | --- |
-| `useTour()` | `{ running, start, stop, next, prev, skip, moveTo, show, refresh }`. The controls, with no re-render on step changes. `running` is a boolean, so it only re-renders when the tour starts or ends. |
+| `useTour()` | `{ running, start, stop, next, prev, skip, moveTo, show, refresh, isOpen, whenShown }`. The controls, with no re-render on step changes. `running` is a boolean, so it only re-renders when the tour starts or ends. `isOpen(stepId)` is true only while that step is on screen; `whenShown(stepId)` resolves true when it appears, false if the run ends without it. |
 | `useTourState()` | The whole snapshot plus `rect`, `next`, `prev`, `skip`, `stop`. The headless path. |
 | `useTourSnapshot()` | `EngineSnapshot<Ctx>`. Re-renders on every engine change. |
 | `useTourSelector(select)` | `T`. Re-renders only when the selected value changes. |

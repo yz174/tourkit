@@ -37,8 +37,8 @@ anything from a renderer, which is what lets one file drive both platforms.
 | `onBeforeBack` | `(context) => boolean \| Promise<boolean>` | | Return false and the tour stays on this step. |
 | `onBeforeExit` | `(context) => boolean \| Promise<boolean>` | | Return false and the tour does not end. Overrides the tour-level hook. |
 | `buttons` | `StepButtons?` | one Next button | Which controls the card shows and what they say. See [Buttons](#buttons). |
-| `align` | `"start" \| "center" \| "end"?` | Where the card sits along the target's edge. Defaults to `center`. |
-| `dismissible` | `boolean?` | `false` stops Escape ending the tour and tells a custom card to hide its skip control. Defaults to `true`, and can also be set on the tour. |
+| `align` | `"start" \| "center" \| "end"?` | `"center"` | Where the card sits along the target's edge. |
+| `dismissible` | `boolean?` | `true` | `false` stops Escape ending the tour and tells a custom card to hide its skip control. Can also be set on the tour. |
 | `placement` | `"auto" \| "top" \| "bottom" \| "left" \| "right"` | `"auto"` | Where the card sits. On React Native, `left` and `right` fall back to `auto`, because a 320px card does not fit beside anything on a phone. |
 | `interaction` | `"block" \| "passthrough" \| "advance-on-press"` | `"block"` | See [Interaction](./interaction.md). |
 | `scroll` | `boolean \| { block?, behavior? }` | `true` | Bring an off-screen target into view. `false` leaves the scroll position alone. |

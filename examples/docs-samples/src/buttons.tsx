@@ -23,7 +23,7 @@ const withButtons: TourConfig<Ctx> = {
     },
     // docs/steps.md — a step with no visible title, named for screen readers
     {
-      id: "filters",
+      id: "filters-panel",
       target: "filters",
       body: "Narrow the list.",
       label: "Filters panel",
@@ -155,7 +155,7 @@ function Launcher() {
         type="button"
         // docs/steps.md — waiting for a step
         onClick={() => {
-          void whenShown("filters").then((shown) => shown && isOpen("filters"));
+          void whenShown("filters-panel").then((shown) => shown && isOpen("filters-panel"));
         }}
       >
         Wait for filters
@@ -169,7 +169,7 @@ function WatchBilling() {
   const engine = useEngine();
 
   useEffect(() => {
-    return engine.onStep("billing", (name, info) => {
+    return engine.onStep("plan", (name, info) => {
       if (name === "show") {
         void `${info.tourId}:${info.stepId} ${info.index + 1}/${info.total}`;
       }
@@ -207,12 +207,12 @@ function Card({ step, isFirst, isLast, dismissible, next, prev, stop }: CardProp
         </button>
       ) : null}
       {buttons.back ? (
-        <button type="button" onClick={prev} disabled={isFirst}>
+        <button type="button" onClick={prev} disabled={isFirst || buttons.backDisabled}>
           {buttons.backLabel}
         </button>
       ) : null}
       {buttons.next ? (
-        <button type="button" onClick={next}>
+        <button type="button" onClick={next} disabled={buttons.nextDisabled}>
           {buttons.advanceLabel(isLast)}
         </button>
       ) : null}

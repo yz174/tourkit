@@ -164,6 +164,7 @@ type CardProps<Ctx = unknown> = {
   theme: Theme;
   isFirst: boolean;
   isLast: boolean;
+  dismissible: boolean;
   next(): void;
   prev(): void;
   skip(): void;
