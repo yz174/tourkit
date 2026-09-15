@@ -12,7 +12,8 @@ for custom renderers, tooling and tests.
 | Import path | Contains |
 | --- | --- |
 | `@tourkit/core` | The engine and the types. No React, no DOM, no dependencies. |
-| `@tourkit/react` | The DOM renderer, the hooks, the recorder. |
+| `@tourkit/core/dom` | The framework-free player: `mountTour`, `registerTarget`, `mountHint`, and the target-resolution helpers. Needs `@floating-ui/dom`, an optional peer. |
+| `@tourkit/react` | The React renderer and the hooks. A thin wrapper over `@tourkit/core/dom`. |
 | `@tourkit/react/unstyled` | The same, with `styled={false}` applied. See [Customization](./customization.md#web-unstyled-mode). |
 | `@tourkit/native` | The React Native renderer. |
 | `@tourkit/ai` | The client half of question-to-tour. Safe in a browser bundle. |
@@ -32,6 +33,30 @@ renderer never needs to depend on `@tourkit/core` directly.
 | `EngineOptions<Ctx>` | `{ tours, context, theme?, storage?, nav?, onEvent? }` | |
 | `EngineSnapshot<Ctx>` | `{ status, tourId, stepIndex, step, steps, total, activeTarget, rects, theme, dismissible, refreshToken, isFirst, isLast, hasNext, hasPrev }` | Immutable. A new object on every change, which is what `useSyncExternalStore` needs. The four flags count visible steps only. |
 | `StartOptions` | `{ at?: number \| string }` | A step index or step id to open at. |
+
+### Behaviour overrides
+
+| Export | Signature | Notes |
+| --- | --- | --- |
+| `withBehavior` | `<Ctx>(config: TourConfig<Ctx>, overrides: BehaviorOverrides<Ctx>) => TourConfig<Ctx>` | Merges function-valued step fields into a config loaded from JSON, keyed by step id. An override naming a step that does not exist is dropped rather than added. |
+| `withBehaviorReport` | `<Ctx>(config, overrides) => { config, unmatched: string[] }` | The same merge, plus the override keys that matched no step. Use it to catch a renamed step id. |
+| `BehaviorOverrides<Ctx>` | `Partial<Record<string, Partial<Omit<TourStep<Ctx>, "id">>>>` | Keyed by step id. `id` is excluded, since it is the key. |
+
+`when`, `gate`, `onEnter` and `onAdvance` are functions, so a `.tour.json` cannot carry them. They
+live in a hand-written module instead:
+
+```ts
+import { withBehavior } from "@tourkit/core";
+import { driverOnboarding } from "./driver-onboarding.tour";
+
+export const onboarding = withBehavior(driverOnboarding, {
+  billing: { when: (context) => context.plan === "pro" },
+  history: { gate: waitForFilter, gateTimeoutMs: 3000 },
+});
+```
+
+The merge is shallow per step: an override replaces a field outright, so `buttons` or `theme` can
+be cleared from the hand-written file rather than being merged field by field.
 
 Methods on `TourEngine`:
 
@@ -180,17 +205,11 @@ type PersistedTour = { outcome: TourOutcome; stepId: string; updatedAt: number }
 | `TourProvider` | Mount once at the root. Props in the [Provider reference](./provider.md). |
 | `TourHost` | The overlay. `TourProvider` renders it after `children`; you never mount it yourself. |
 | `TourHint` | A standalone dot with a popover, independent of any tour. See [Hints](./hints.md). |
-| `TourRecorder` | The recorder panel. See [Recording a tour](./recorder.md). |
 | `CoachCard`, `Overlay`, `ProgressDots` | The three default slots, exported so a custom slot can wrap one rather than replace it. |
 
-```ts
-type TourRecorderProps = {
-  name?: string;              // "recorded". Becomes the generated file name.
-  endpoint?: string;          // "http://127.0.0.1:5178/record"
-  autoShow?: boolean;         // true. Hides the panel unless `tourkit record` answers.
-  onFinish?: (recording: Recording) => void;
-};
-```
+`TourRecorder` and `TourRecorderProps` were removed at 0.3.0. Recording no longer mounts a
+component; see [Recording a tour](./recorder.md) and
+[migrating](./migrating.md#removed-from-tourkitreact).
 
 ### Hooks
 
@@ -253,7 +272,9 @@ The scoring rules and the tie-breaking are in [When a target breaks](./self-heal
 | `describeElement` | `(element, route?, registry?) => RecordedStep` |
 | `cssPath` | `(element: Element, root?: Document) => string`. Prefers `data-testid`, then a stable `id`, then the shortest unique ancestor chain, capped at six segments. |
 | `textOf` | `(element: Element) => string \| undefined`. Trimmed, collapsed, capped at 120 characters. |
-| `RecordedStep`, `Recording` | The wire format `tourkit record` consumes. |
+These live in `@tourkit/core/dom` and are re-exported here unchanged. `RecordedStep` and
+`Recording`, the wire format the recorder posts, are no longer re-exported: import them from
+`@tourkit/core/dom`.
 
 ### Slot types
 
@@ -333,13 +354,14 @@ Server half. This is the only import that touches your model key.
 | --- | --- |
 | `createTourkitHandler` | `({ generate, tourId? }) => (request: Request) => Promise<Response>` |
 | `anthropicGenerator` | `({ apiKey?, model?, client? }) => TourGenerator`. Defaults to `claude-opus-5`, loads the SDK lazily. |
-| `anthropicDrafter` | `({ apiKey?, model?, client? }) => Drafter`. Writes step copy from a recording, behind `tourkit record --draft`. |
+| `anthropicDrafter` | `({ apiKey?, model?, client? }) => Drafter`. Writes step copy from a recording. Still exported, but no first-party consumer since the skill took over drafting. |
 | `TourGenerator` | `({ question, manifest }) => Promise<unknown>`. Any provider fits. |
 
 The handler answers `405` to anything but POST, `400` on a malformed request, `502` when
 `generate` throws, and `422` with a `reason` when the result names a target that is not in the
 manifest. See [Ask and be shown](./ai.md).
 
-## @tourkit/cli
+## The tourkit skill
 
-A binary, not a library. Nothing imports it at runtime. See the [CLI reference](./cli.md).
+Not a package. `@tourkit/cli` is discontinued and its scaffold, record server and codegen moved
+into an agent skill. Nothing imports it at runtime. See [the tourkit skill](./skill.md).

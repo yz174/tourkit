@@ -168,3 +168,17 @@ costs nothing forever and can be edited, translated and reviewed like any other 
 It is not a wizard that generates tours you cannot inspect. Every generated tour is a plain
 `TourConfig` you can log, test and pin. A tour nobody can audit is a demo, not something a team
 ships.
+
+## Drafting recorded step copy
+
+`@tourkit/ai` also exports `anthropicDrafter`, which writes step copy from a recording. It was
+built for `tourkit record --draft`, and that CLI no longer exists.
+
+Drafting is the skill's job now, and it does the job better for a structural reason: the drafter
+received a JSON blob and had to guess a title from `textContent`, having never seen the codebase.
+The skill greps the repository for each recorded element, reads the component and the handler it
+calls, and writes copy from what the code does. See [the skill](./skill.md#commands).
+
+`anthropicDrafter` stays exported and stays supported. It has no first-party consumer, so if you
+call it, you are the only one: the signature will not change under you, but nothing in this repo
+exercises it end to end either.
