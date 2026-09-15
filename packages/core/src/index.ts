@@ -1,3 +1,9 @@
+export {
+  type BehaviorOverrides,
+  type WithBehaviorResult,
+  withBehavior,
+  withBehaviorReport,
+} from "./behavior";
 export { type ResolvedButtons, resolveButtons, type StepButtons } from "./buttons";
 export { contrastRatio, isDark, luminance } from "./contrast";
 export {
