@@ -51,23 +51,31 @@ export {
   visibleSteps,
   writeRecord,
 } from "@tourkit/core";
-export { nextFocusTarget } from "./a11y/focus";
-export { useEngine, useTourContext } from "./context";
-export { type Hole, holeClipPath, holePathData, holesClipPath, holesPathData } from "./dom/clip";
 export {
+  browserStorage,
   buildFingerprint,
+  buildManifest,
+  cssPath,
+  describeElement,
+  type Hole,
   healTarget,
+  holeClipPath,
+  holePathData,
+  holesClipPath,
+  holesPathData,
+  memoryStorage,
   nearestHeading,
-  scoreCandidate,
-} from "./dom/fingerprint";
-export {
+  nextFocusTarget,
   type Resolution,
   resolveTarget,
   resolveWithFingerprint,
+  scoreCandidate,
   scrollIntoViewIfNeeded,
   scrollSettings,
+  textOf,
   toFloatingPlacement,
-} from "./dom/resolve";
+} from "@tourkit/core/dom";
+export { useEngine, useTourContext } from "./context";
 export {
   useTargetManifest,
   useTour,
@@ -76,16 +84,6 @@ export {
   useTourState,
   useTourTarget,
 } from "./hooks";
-export { buildManifest } from "./manifest";
-export {
-  cssPath,
-  describeElement,
-  type RecordedStep,
-  type Recording,
-  textOf,
-} from "./recorder/selector";
-export { TourRecorder, type TourRecorderProps } from "./recorder/TourRecorder";
-export { browserStorage, memoryStorage } from "./storage";
 export { TourHint, type TourHintProps } from "./TourHint";
 export { TourHost } from "./TourHost";
 export { TourProvider, type TourProviderProps } from "./TourProvider";
