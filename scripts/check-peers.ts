@@ -2,7 +2,7 @@ import { Glob } from "bun";
 
 const problems: string[] = [];
 
-for await (const file of new Glob("{packages,tools}/*/package.json").scan(".")) {
+for await (const file of new Glob("packages/*/package.json").scan(".")) {
   const manifest = await Bun.file(file).json();
   for (const [name, range] of Object.entries(manifest.peerDependencies ?? {})) {
     if (typeof range === "string" && !range.startsWith(">=")) {

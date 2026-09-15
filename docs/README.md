@@ -20,7 +20,7 @@
 **Power tools**
 
 - [Recording a tour](./recorder.md) — click through your app, get a tour file
-- [CLI reference](./cli.md) — `tourkit init` and `tourkit record`, flag by flag
+- [The tourkit skill](./skill.md) — install it, and what each command does
 - [When a target breaks](./self-healing.md) — fingerprints and healing
 - [Ask and be shown](./ai.md) — a question becomes a tour of the real interface
 

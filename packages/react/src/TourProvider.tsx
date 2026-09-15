@@ -6,9 +6,9 @@ import {
   type TourConfig,
   TourEngine,
 } from "@tourkit/core";
+import { browserStorage } from "@tourkit/core/dom";
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { TourContext, type TourContextValue } from "./context";
-import { browserStorage } from "./storage";
 import { TourHost } from "./TourHost";
 import type { ClassNames, ScrollHandler, Slots } from "./types";
 import { CoachCard } from "./ui/CoachCard";

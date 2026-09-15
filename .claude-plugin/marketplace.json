@@ -1,0 +1,44 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "tourkit",
+  "owner": {
+    "name": "yz174",
+    "url": "https://github.com/yz174"
+  },
+  "metadata": {
+    "description": "The tourkit agent skill: record, author, wire, heal and review in-app product tours in any web framework."
+  },
+  "plugins": [
+    {
+      "name": "tourkit",
+      "source": "./",
+      "description": "Record an in-app product tour by clicking through a running app in any web framework, then write the step copy from the component source. Replaces the tourkit CLI.",
+      "author": {
+        "name": "yz174",
+        "url": "https://github.com/yz174"
+      },
+      "category": "development",
+      "homepage": "https://github.com/yz174/tourkit#readme",
+      "keywords": [
+        "tour",
+        "product-tour",
+        "onboarding",
+        "walkthrough",
+        "coach-marks",
+        "spotlight",
+        "recorder",
+        "tourkit",
+        "react",
+        "vue",
+        "angular",
+        "svelte",
+        "ember",
+        "astro",
+        "electron",
+        "tauri",
+        "react-native"
+      ],
+      "skills": ["./skills/tourkit"]
+    }
+  ]
+}

@@ -1,22 +1,11 @@
-import { arrow, autoUpdate, computePosition, flip, offset, shift } from "@floating-ui/dom";
-import { padRadius, type Radius, type Rect, resolveScrimPress } from "@tourkit/core";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { resolveScrimPress } from "@tourkit/core";
+import { createPresenter } from "@tourkit/core/dom";
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
-import { nextFocusTarget } from "./a11y/focus";
 import { useEngine, useTourContext } from "./context";
-import { type Hole, holeClipPath, holesClipPath } from "./dom/clip";
-import {
-  resolveTarget,
-  resolveWithFingerprint,
-  scrollIntoViewIfNeeded,
-  scrollSettings,
-  toFloatingPlacement,
-} from "./dom/resolve";
-import { useTour, useTourSnapshot } from "./hooks";
-import type { CardPlacement } from "./types";
+import { useTour } from "./hooks";
 import { Ring } from "./ui/Ring";
 
-const CENTERED: CardPlacement = { left: 0, top: 0, side: "center", arrow: null };
 const EASING = "cubic-bezier(0.22, 1, 0.36, 1)";
 
 /** `??` would accept an empty title, naming the dialog with nothing. Blank falls through. */
@@ -26,233 +15,42 @@ function accessibleName(title: string | undefined, label: string | undefined): s
   return "Tour step";
 }
 
-function prefersReducedMotion(): boolean {
-  if (typeof window === "undefined" || !window.matchMedia) return false;
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
+const useAnchorEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
+/**
+ * Renders React's own chrome from the presenter's state stream. The resolving, scrolling, measuring
+ * and placing all happen in @tourkit/core/dom, so a Vue or plain-HTML page gets the same behaviour
+ * from `mountTour`; only the slot components below are React's.
+ */
 export function TourHost() {
   const { components, registry, container, styled, classNames, scrollHandler } = useTourContext();
   const engine = useEngine();
-  const snapshot = useTourSnapshot();
   const { next, prev, skip, stop } = useTour();
 
-  const [mounted, setMounted] = useState(false);
-  const [element, setElement] = useState<Element | null>(null);
-  const [positioned, setPositioned] = useState<CardPlacement>(CENTERED);
-  const [reduceMotion, setReduceMotion] = useState(false);
-  const [animating, setAnimating] = useState(false);
-  const [viewport, setViewport] = useState({ width: 0, height: 0 });
+  const [presenter] = useState(() => createPresenter(engine, { registry, scrollHandler }));
+  const state = useSyncExternalStore(presenter.subscribe, presenter.getState, presenter.getState);
 
+  const [mounted, setMounted] = useState(false);
   const cardRef = useRef<HTMLDivElement | null>(null);
   const arrowRef = useRef<HTMLDivElement | null>(null);
-  const lastTarget = useRef<string | null>(null);
-  const placedOnce = useRef(false);
-  const warned = useRef(new Set<string>());
 
-  const { status, step, stepIndex, total, theme, dismissible, refreshToken } = snapshot;
+  // No destroy() here: the presenter puts its listeners up on the first subscriber and takes them
+  // down with the last, so useSyncExternalStore's own cleanup is the whole teardown.
+  useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    presenter.setOptions({ scrollHandler });
+  }, [presenter, scrollHandler]);
+
+  // The card and the arrow anchor are React's nodes, so the presenter only learns about them once
+  // they are committed. Every render reports them; setAnchors ignores a repeat.
+  useAnchorEffect(() => {
+    presenter.setAnchors(cardRef.current, arrowRef.current);
+  });
+
+  const { status, step, stepIndex, total, theme, dismissible, rect, placement, clipPath } = state;
   const running = status !== "idle";
   const active = status === "active";
-  const target = step?.target ?? null;
-  const rect = target ? (snapshot.rects[target] ?? null) : null;
-  const placement = target ? positioned : CENTERED;
-
-  useEffect(() => {
-    const measureViewport = () =>
-      setViewport({ width: window.innerWidth, height: window.innerHeight });
-    measureViewport();
-    window.addEventListener("resize", measureViewport);
-    window.visualViewport?.addEventListener("resize", measureViewport);
-    return () => {
-      window.removeEventListener("resize", measureViewport);
-      window.visualViewport?.removeEventListener("resize", measureViewport);
-    };
-  }, []);
-
-  useEffect(() => {
-    setMounted(true);
-    setReduceMotion(prefersReducedMotion());
-    if (typeof window === "undefined" || !window.matchMedia) return;
-    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const listener = (event: MediaQueryListEvent) => setReduceMotion(event.matches);
-    query.addEventListener("change", listener);
-    return () => query.removeEventListener("change", listener);
-  }, []);
-
-  useEffect(() => {
-    if (!running || !target) {
-      setElement(null);
-      return;
-    }
-    const find = () => {
-      const { element: found, healed } = resolveWithFingerprint(
-        target,
-        registry,
-        step?.fingerprint,
-      );
-      if (!found) return null;
-      const key = `${snapshot.tourId}:${step?.id}`;
-      if (healed && !warned.current.has(key)) {
-        warned.current.add(key);
-        console.warn(
-          `tourkit: step "${step?.id}" could not find "${target}" and matched it by fingerprint instead. Update the target before it stops matching.`,
-        );
-      }
-      setElement((current) => (current === found ? current : found));
-      return found;
-    };
-    if (find()) return;
-    const observer = new MutationObserver(() => {
-      if (find()) observer.disconnect();
-    });
-    observer.observe(document.documentElement, { childList: true, subtree: true });
-    return () => observer.disconnect();
-  }, [running, target, registry, step, snapshot.tourId]);
-
-  useEffect(() => {
-    if (!element) return;
-    const { enabled, block, behavior } = scrollSettings(step?.scroll);
-    if (!enabled || !step) return;
-    const resolved = reduceMotion ? ("auto" as const) : behavior;
-    if (scrollHandler) {
-      scrollHandler(element, { block, behavior: resolved }, step);
-      return;
-    }
-    scrollIntoViewIfNeeded(element, block, resolved);
-  }, [element, step, reduceMotion, scrollHandler]);
-
-  const reposition = useCallback(async () => {
-    if (!element || !target) return;
-    const box = element.getBoundingClientRect();
-    engine.setRect(target, { x: box.x, y: box.y, width: box.width, height: box.height });
-
-    const card = cardRef.current;
-    if (!card) return;
-
-    const middleware = [offset(theme.card.offset), flip(), shift({ padding: 16 })];
-    if (arrowRef.current)
-      middleware.push(arrow({ element: arrowRef.current, padding: theme.arrow.padding }));
-
-    const result = await computePosition(element, card, {
-      strategy: "fixed",
-      placement: toFloatingPlacement(step?.placement ?? "auto", step?.align ?? "center"),
-      middleware,
-    });
-
-    const data = result.middlewareData.arrow;
-    setPositioned({
-      left: Math.round(result.x),
-      top: Math.round(result.y),
-      side: result.placement.split("-")[0] as CardPlacement["side"],
-      arrow: data ? { left: Math.round(data.x ?? 0), top: Math.round(data.y ?? 0) } : null,
-    });
-  }, [element, target, engine, step, theme.card.offset, theme.arrow.padding]);
-
-  useEffect(() => {
-    if (!element || !cardRef.current) return;
-    void reposition();
-    return autoUpdate(element, cardRef.current, () => void reposition());
-  }, [element, reposition]);
-
-  useEffect(() => {
-    if (!element) return;
-    // Reading refreshToken is the point: engine.refresh() bumps it to force a remeasure
-    // without waiting for the next scroll or resize that autoUpdate would catch.
-    void refreshToken;
-    void reposition();
-  }, [refreshToken, element, reposition]);
-
-  useEffect(() => {
-    if (!running) {
-      placedOnce.current = false;
-      lastTarget.current = null;
-      warned.current.clear();
-      setAnimating(false);
-    }
-  }, [running]);
-
-  useEffect(() => {
-    if (!active) return;
-    if (lastTarget.current === target) return;
-    const wasPlaced = placedOnce.current;
-    lastTarget.current = target;
-    placedOnce.current = true;
-    if (!wasPlaced || reduceMotion) return;
-    setAnimating(true);
-    const timer = setTimeout(() => setAnimating(false), theme.motion.morph);
-    return () => clearTimeout(timer);
-  }, [active, target, reduceMotion, theme.motion.morph]);
-
-  useEffect(() => {
-    const stepId = step?.id;
-    if (!active || !stepId) return;
-    const card = cardRef.current;
-    if (!card) return;
-    const focusable = card.querySelector<HTMLElement>("button, [href], input, [tabindex='0']");
-    (focusable ?? card).focus({ preventScroll: true });
-  }, [active, step?.id]);
-
-  useEffect(() => {
-    if (!active) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        if (dismissible) stop();
-        return;
-      }
-      if (event.key === "ArrowRight") {
-        event.preventDefault();
-        next();
-        return;
-      }
-      if (event.key === "ArrowLeft") {
-        event.preventDefault();
-        prev();
-        return;
-      }
-      const card = cardRef.current;
-      if (event.key === "Tab" && card) {
-        const destination = nextFocusTarget(card, document.activeElement, event.shiftKey);
-        if (destination) {
-          event.preventDefault();
-          destination.focus({ preventScroll: true });
-        }
-      }
-    };
-    document.addEventListener("keydown", onKeyDown, true);
-    return () => document.removeEventListener("keydown", onKeyDown, true);
-  }, [active, next, prev, stop, dismissible]);
-
-  const clipPath = useMemo(() => {
-    const vw = viewport.width;
-    const vh = viewport.height;
-    if (vw === 0 || vh === 0) return "none";
-    if (!rect) return holeClipPath(vw, vh, vw / 2, vh / 2, 0, 0, 0);
-
-    const padding = step?.padding ?? theme.spotlight.padding;
-    // A Corners object survives: flattening it to a number would drop the per-corner values.
-    // "auto" has no element radius to read on web, so it resolves to 8, as documented.
-    const configured = step?.radius ?? theme.spotlight.radius;
-    const base: Radius = configured === "auto" || configured === undefined ? 8 : configured;
-
-    const pad = (box: Rect): Hole => ({
-      x: box.x - padding,
-      y: box.y - padding,
-      width: box.width + padding * 2,
-      height: box.height + padding * 2,
-      radius: padRadius(base, padding),
-    });
-
-    // Extra targets are measured here rather than through the engine's rect store, so a
-    // refresh() has to recompute this memo. Reading the token is what makes that happen.
-    void refreshToken;
-
-    const extras = (step?.extraTargets ?? [])
-      .map((id) => resolveTarget(id, registry)?.getBoundingClientRect())
-      .filter((box): box is DOMRect => box !== undefined && box !== null);
-
-    return holesClipPath(vw, vh, [rect, ...extras].map(pad));
-  }, [rect, step, theme, viewport, registry, refreshToken]);
 
   if (!mounted || !running || !step) return null;
 
@@ -275,8 +73,8 @@ export function TourHost() {
       : typeof theme.spotlight.radius === "number"
         ? theme.spotlight.radius
         : 8;
-  const transition = animating ? `clip-path ${theme.motion.morph}ms ${EASING}` : "none";
-  const cardTransition = animating
+  const transition = state.animating ? `clip-path ${theme.motion.morph}ms ${EASING}` : "none";
+  const cardTransition = state.animating
     ? `left ${theme.motion.travel}ms ${EASING}, top ${theme.motion.travel}ms ${EASING}`
     : "none";
 
@@ -330,7 +128,7 @@ export function TourHost() {
         styled={styled}
         className={classNames.overlay}
       />
-      {theme.ring.show && holeBox && !reduceMotion ? (
+      {theme.ring.show && holeBox && !state.reduceMotion ? (
         <Ring hole={holeBox} radius={holeRadius} theme={theme} />
       ) : null}
       <div

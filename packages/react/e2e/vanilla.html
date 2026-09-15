@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>tourkit e2e — no framework</title>
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; font-family: system-ui, sans-serif; padding: 24px; }
+      #hero { display: block; margin: 16px 0; padding: 12px 20px; }
+      #inbox { display: block; margin: 16px 0; padding: 10px 16px; }
+      #scroller { height: 240px; overflow-y: auto; border: 1px solid #ccc; width: 300px; }
+      .row { padding: 12px; border-bottom: 1px solid #eee; }
+      #spacer { height: 1200px; }
+    </style>
+  </head>
+  <body>
+    <button type="button" id="launch">launch</button>
+    <span id="state">idle</span>
+    <button type="button" id="hero">Hero button</button>
+    <button type="button" id="inbox">Inbox</button>
+    <div id="scroller"></div>
+    <div id="spacer"></div>
+    <script type="module" src="./vanilla-bundle.js"></script>
+  </body>
+</html>
