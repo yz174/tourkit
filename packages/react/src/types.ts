@@ -1,20 +1,9 @@
 import type { Rect, Theme, TourStep } from "@tourkit/core";
+import type { CardPlacement, ClassNames } from "@tourkit/core/dom";
 import type { ComponentType } from "react";
 
-export type CardPlacement = {
-  left: number;
-  top: number;
-  side: "top" | "bottom" | "left" | "right" | "center";
-  arrow: { left: number; top: number } | null;
-};
-
-export type ClassNames = {
-  root?: string;
-  overlay?: string;
-  card?: string;
-  arrow?: string;
-  progress?: string;
-};
+// The shapes plain DOM shares with React live in @tourkit/core/dom; only the slots below need React.
+export type { CardPlacement, ClassNames, ScrollHandler } from "@tourkit/core/dom";
 
 export type CardProps<Ctx = unknown> = {
   step: TourStep<Ctx>;
@@ -54,13 +43,3 @@ export type Slots = {
   Backdrop: ComponentType<BackdropProps>;
   Progress: ComponentType<ProgressProps>;
 };
-
-/**
- * Replaces the built-in scrolling. `behavior` already accounts for reduced motion, so a handler
- * that respects it can pass the value straight through.
- */
-export type ScrollHandler = (
-  element: Element,
-  settings: { block: ScrollLogicalPosition; behavior: ScrollBehavior },
-  step: TourStep<unknown>,
-) => void;

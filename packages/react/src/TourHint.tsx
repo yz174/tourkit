@@ -1,10 +1,10 @@
 import { autoUpdate, computePosition, flip, offset, shift } from "@floating-ui/dom";
 import type { Align } from "@tourkit/core";
 import { mergeTheme, type Placement, type ThemeOverride } from "@tourkit/core";
+import { resolveTarget, toFloatingPlacement } from "@tourkit/core/dom";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTourContext } from "./context";
-import { resolveTarget, toFloatingPlacement } from "./dom/resolve";
 
 const STYLE_ID = "tourkit-hint-keyframes";
 const KEYFRAMES = `@keyframes tourkit-hint-pulse {
