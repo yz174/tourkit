@@ -1,5 +1,5 @@
 import { arrow, autoUpdate, computePosition, flip, offset, shift } from "@floating-ui/dom";
-import { type Rect, resolveScrimPress } from "@tourkit/core";
+import { padRadius, type Radius, type Rect, resolveScrimPress } from "@tourkit/core";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { nextFocusTarget } from "./a11y/focus";
@@ -18,6 +18,13 @@ import { Ring } from "./ui/Ring";
 
 const CENTERED: CardPlacement = { left: 0, top: 0, side: "center", arrow: null };
 const EASING = "cubic-bezier(0.22, 1, 0.36, 1)";
+
+/** `??` would accept an empty title, naming the dialog with nothing. Blank falls through. */
+function accessibleName(title: string | undefined, label: string | undefined): string {
+  if (title?.trim()) return title;
+  if (label?.trim()) return label;
+  return "Tour step";
+}
 
 function prefersReducedMotion(): boolean {
   if (typeof window === "undefined" || !window.matchMedia) return false;
@@ -223,19 +230,17 @@ export function TourHost() {
     if (!rect) return holeClipPath(vw, vh, vw / 2, vh / 2, 0, 0, 0);
 
     const padding = step?.padding ?? theme.spotlight.padding;
-    const base =
-      typeof step?.radius === "number"
-        ? step.radius
-        : typeof theme.spotlight.radius === "number"
-          ? theme.spotlight.radius
-          : 8;
+    // A Corners object survives: flattening it to a number would drop the per-corner values.
+    // "auto" has no element radius to read on web, so it resolves to 8, as documented.
+    const configured = step?.radius ?? theme.spotlight.radius;
+    const base: Radius = configured === "auto" || configured === undefined ? 8 : configured;
 
     const pad = (box: Rect): Hole => ({
       x: box.x - padding,
       y: box.y - padding,
       width: box.width + padding * 2,
       height: box.height + padding * 2,
-      radius: base + padding,
+      radius: padRadius(base, padding),
     });
 
     // Extra targets are measured here rather than through the engine's rect store, so a
@@ -335,7 +340,7 @@ export function TourHost() {
         data-tourkit-placement={placement.side}
         role="dialog"
         aria-modal="true"
-        aria-label={step.title ?? step.label ?? "Tour step"}
+        aria-label={accessibleName(step.title, step.label)}
         tabIndex={-1}
         style={{
           position: "fixed",

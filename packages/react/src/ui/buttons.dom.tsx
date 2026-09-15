@@ -380,3 +380,39 @@ describe("highlighting more than one element", () => {
     expect(screen.getByText("First stop")).toBeInTheDocument();
   });
 });
+
+describe("an empty title", () => {
+  test("falls through to the label rather than naming the dialog with nothing", async () => {
+    await startTour([{ id: "one", target: "cta", title: "", label: "Filters panel" }]);
+
+    expect(document.querySelector('[role="dialog"]')).toHaveAttribute(
+      "aria-label",
+      "Filters panel",
+    );
+  });
+
+  test("falls all the way through to the fallback when neither is usable", async () => {
+    await startTour([{ id: "one", target: "cta", title: "" }]);
+
+    expect(document.querySelector('[role="dialog"]')).toHaveAttribute("aria-label", "Tour step");
+  });
+});
+
+describe("a per-corner radius on web", () => {
+  const clip = () =>
+    (document.querySelector('[data-tourkit="backdrop"]') as HTMLElement).style.clipPath;
+
+  test("rounds only the corners it was given", async () => {
+    await startTour([{ id: "one", target: "cta", title: "First stop", radius: { topLeft: 12 } }]);
+
+    // Two arcs of 12 on the padded radius, the other two flat. A flattened number would give four.
+    expect(clip()).toContain("A16 16");
+    expect(clip()).toContain("A4 4");
+  });
+
+  test("a plain number still rounds every corner the same", async () => {
+    await startTour([{ id: "one", target: "cta", title: "First stop", radius: 12 }]);
+
+    expect(clip().match(/A16 16/g)?.length).toBe(4);
+  });
+});
